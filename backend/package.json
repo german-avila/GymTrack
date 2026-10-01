@@ -1,0 +1,32 @@
+{
+  "name": "gymtrack-backend",
+  "version": "1.0.0",
+  "description": "Backend API for the GymTrack application",
+  "homepage": "https://github.com/german-avila/GymTrack#readme",
+  "bugs": {
+    "url": "https://github.com/german-avila/GymTrack/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/german-avila/GymTrack.git"
+  },
+  "license": "ISC",
+  "author": "Germán Ávila",
+  "type": "module",
+  "main": "index.js",
+ "scripts": {
+  "dev": "tsx watch src/index.ts",
+  "build": "tsc",
+  "start": "node dist/index.js"
+  },
+
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.3",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
