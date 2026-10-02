@@ -23,16 +23,16 @@ function ExerciseForm({
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-  if (editingExercise) {
-    setName(editingExercise.name);
-    setMuscleGroup(editingExercise.muscleGroup);
-    setDescription(editingExercise.description ?? "");
-  } else {
-    setName("");
-    setMuscleGroup("");
-    setDescription("");
-  }
-}, [editingExercise]);
+    if (editingExercise) {
+      setName(editingExercise.name);
+      setMuscleGroup(editingExercise.muscleGroup);
+      setDescription(editingExercise.description ?? "");
+    } else {
+      setName("");
+      setMuscleGroup("");
+      setDescription("");
+    }
+  }, [editingExercise]);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -48,21 +48,17 @@ function ExerciseForm({
     try {
       if (editingExercise) {
         await updateExercise(
-            editingExercise.id,
-            name,
-            muscleGroup,
-            description
+          editingExercise.id,
+          name,
+          muscleGroup,
+          description
         );
-        } else {
+      } else {
         await createExercise(
-            name,
-            muscleGroup,
-            description
+          name,
+          muscleGroup,
+          description
         );
-    }
-
-      if (!response.ok) {
-        throw new Error("Failed to save exercise");
       }
 
       setName("");
@@ -79,7 +75,9 @@ function ExerciseForm({
 
   return (
     <form onSubmit={handleSubmit}>
-      <h2>{editingExercise ? "Editar ejercicio" : "Añadir ejercicio"}</h2>
+      <h2>
+        {editingExercise ? "Editar ejercicio" : "Añadir ejercicio"}
+      </h2>
 
       <div>
         <label htmlFor="name">Nombre</label>
@@ -120,14 +118,16 @@ function ExerciseForm({
             : "Guardar"}
       </button>
 
-  {editingExercise && (
-  <button type="button" onClick={onCancelEdit}>
-    Cancelar
-  </button>
-  )}
-
-  </form>
-
-)}
+      {editingExercise && (
+        <button
+          type="button"
+          onClick={onCancelEdit}
+        >
+          Cancelar
+        </button>
+      )}
+    </form>
+  );
+}
 
 export default ExerciseForm;
