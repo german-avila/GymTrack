@@ -2,6 +2,7 @@ import express from "express";
 import { pool } from "./database/db.js";
 import { exerciseRouter } from "./routes/exerciseRoutes.js";
 import cors from "cors";
+import { routineRouter } from "./routes/routineRoutes.js";
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.get("/api/health", (req, res) => {
 });
 
 app.use("/api/exercises", exerciseRouter);
+app.use("/api/routines", routineRouter);
 
 try {
   const result = await pool.query("SELECT NOW()");
