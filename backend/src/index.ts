@@ -1,24 +1,9 @@
 import express from "express";
-import type { Exercise } from "./models/Exercise.js";
+import { pool } from "./database/db.js";
 
 const app = express();
 app.use(express.json());
 const port = 3000;
-
-const exercises: Exercise[] = [
-  {
-    id: 1,
-    name: "Bench Press",
-    muscleGroup: "Chest",
-    description: "Barbell chest exercise"
-  },
-  {
-    id: 2,
-    name: "Squat",
-    muscleGroup: "Legs",
-    description: "Barbell lower body exercise"
-  }
-];
 
 app.get("/api/health", (req, res) => {
   res.status(200).json({
@@ -27,11 +12,29 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-app.get("/api/exercises", (req, res) => {
-  res.status(200).json(exercises);
+app.get("/api/exercises", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        id,
+        name,
+        muscle_group AS "muscleGroup",
+        description
+      FROM exercises
+      ORDER BY id
+    `);
+
+    return res.status(200).json(result.rows);
+  } catch (error) {
+    console.error("Failed to get exercises:", error);
+
+    return res.status(500).json({
+      message: "Internal server error"
+    });
+  }
 });
 
-app.get("/api/exercises/:id", (req, res) => {
+app.get("/api/exercises/:id", async (req, res) => {
   const id = Number(req.params.id);
 
   if (!Number.isInteger(id) || id <= 0) {
@@ -40,18 +43,37 @@ app.get("/api/exercises/:id", (req, res) => {
     });
   }
 
-  const exercise = exercises.find((exercise) => exercise.id === id);
+  try {
+    const result = await pool.query(
+      `
+        SELECT
+          id,
+          name,
+          muscle_group AS "muscleGroup",
+          description
+        FROM exercises
+        WHERE id = $1
+      `,
+      [id]
+    );
 
-  if (!exercise) {
-    return res.status(404).json({
-      message: "Exercise not found"
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        message: "Exercise not found"
+      });
+    }
+
+    return res.status(200).json(result.rows[0]);
+  } catch (error) {
+    console.error("Failed to get exercise:", error);
+
+    return res.status(500).json({
+      message: "Internal server error"
     });
   }
-
-  return res.status(200).json(exercise);
 });
 
-app.post("/api/exercises", (req, res) => {
+app.post("/api/exercises", async (req, res) => {
   const { name, muscleGroup, description } = req.body;
 
   if (
@@ -71,19 +93,40 @@ app.post("/api/exercises", (req, res) => {
     });
   }
 
-  const newExercise: Exercise = {
-    id: exercises.length + 1,
-    name: name.trim(),
-    muscleGroup: muscleGroup.trim(),
-    ...(description !== undefined && {
-      description: description.trim()
-    })
-  };
+  try {
+    const result = await pool.query(
+      `
+        INSERT INTO exercises (name, muscle_group, description)
+        VALUES ($1, $2, $3)
+        RETURNING
+          id,
+          name,
+          muscle_group AS "muscleGroup",
+          description
+      `,
+      [
+        name.trim(),
+        muscleGroup.trim(),
+        description?.trim() ?? null
+      ]
+    );
 
-  exercises.push(newExercise);
+    return res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error("Failed to create exercise:", error);
 
-  return res.status(201).json(newExercise);
+    return res.status(500).json({
+      message: "Internal server error"
+    });
+  }
 });
+
+try {
+  const result = await pool.query("SELECT NOW()");
+  console.log("Database connected:", result.rows[0]);
+} catch (error) {
+  console.error("Database connection failed:", error);
+}
 
 app.listen(port, () => {
   console.log(`GymTrack backend running on port ${port}`);
