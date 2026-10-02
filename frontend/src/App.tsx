@@ -6,6 +6,7 @@ import {
   deleteExercise as deleteExerciseRequest,
   getExercises
 } from "./services/exerciseService";
+import "./App.css";
 
 function App() {
   const [exercises, setExercises] = useState<Exercise[]>([]);

@@ -74,12 +74,12 @@ function ExerciseForm({
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form className="exercise-form" onSubmit={handleSubmit}>
       <h2>
         {editingExercise ? "Editar ejercicio" : "Añadir ejercicio"}
       </h2>
 
-      <div>
+      <div className="form-group">
         <label htmlFor="name">Nombre</label>
         <input
           id="name"
@@ -89,7 +89,7 @@ function ExerciseForm({
         />
       </div>
 
-      <div>
+      <div className="form-group">
         <label htmlFor="muscleGroup">Grupo muscular</label>
         <input
           id="muscleGroup"
@@ -99,7 +99,7 @@ function ExerciseForm({
         />
       </div>
 
-      <div>
+      <div className="form-group">
         <label htmlFor="description">Descripción</label>
         <textarea
           id="description"
@@ -110,7 +110,11 @@ function ExerciseForm({
 
       {error && <p>{error}</p>}
 
-      <button type="submit" disabled={isSubmitting}>
+      <button
+        className="primary-button"
+        type="submit"
+        disabled={isSubmitting}
+        >
         {isSubmitting
           ? "Guardando..."
           : editingExercise
@@ -120,9 +124,10 @@ function ExerciseForm({
 
       {editingExercise && (
         <button
-          type="button"
-          onClick={onCancelEdit}
-        >
+            className="secondary-button"
+            type="button"
+            onClick={onCancelEdit}
+            >
           Cancelar
         </button>
       )}

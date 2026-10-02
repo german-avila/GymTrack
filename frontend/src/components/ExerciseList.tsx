@@ -12,16 +12,22 @@ function ExerciseList({
   onEditExercise
 }: ExerciseListProps) {
   return (
-    <ul>
+    <ul className="exercise-list">
       {exercises.map((exercise) => (
-        <li key={exercise.id}>
+        <li className="exercise-item" key={exercise.id}>
           <strong>{exercise.name}</strong> - {exercise.muscleGroup}
 
-          <button onClick={() => onEditExercise(exercise)}>
+          <button
+            className="secondary-button"
+            onClick={() => onEditExercise(exercise)}
+          >
             Editar
           </button>
 
-          <button onClick={() => onDeleteExercise(exercise.id)}>
+          <button
+            className="danger-button"
+            onClick={() => onDeleteExercise(exercise.id)}
+          >
             Eliminar
           </button>
         </li>
