@@ -109,3 +109,104 @@ export async function createExercise(req: Request, res: Response) {
     });
   }
 }
+    export async function updateExercise(req: Request, res: Response) {
+    const id = Number(req.params.id);
+    const { name, muscleGroup, description } = req.body;
+
+    if (!Number.isInteger(id) || id <= 0) {
+        return res.status(400).json({
+        message: "Invalid exercise ID"
+        });
+    }
+
+    if (
+        typeof name !== "string" ||
+        typeof muscleGroup !== "string" ||
+        name.trim() === "" ||
+        muscleGroup.trim() === ""
+    ) {
+        return res.status(400).json({
+        message: "Name and muscle group must be non-empty strings"
+        });
+    }
+
+    if (description !== undefined && typeof description !== "string") {
+        return res.status(400).json({
+        message: "Description must be a string"
+        });
+    }
+
+    try {
+        const result = await pool.query(
+        `
+            UPDATE exercises
+            SET
+            name = $1,
+            muscle_group = $2,
+            description = $3
+            WHERE id = $4
+            RETURNING
+            id,
+            name,
+            muscle_group AS "muscleGroup",
+            description
+        `,
+        [
+            name.trim(),
+            muscleGroup.trim(),
+            description?.trim() ?? null,
+            id
+        ]
+        );
+
+        if (result.rows.length === 0) {
+        return res.status(404).json({
+            message: "Exercise not found"
+        });
+        }
+
+        return res.status(200).json(result.rows[0]);
+    } catch (error) {
+        console.error("Failed to update exercise:", error);
+
+        return res.status(500).json({
+        message: "Internal server error"
+        });
+    }
+    }
+    export async function deleteExercise(req: Request, res: Response) {
+  const id = Number(req.params.id);
+
+  if (!Number.isInteger(id) || id <= 0) {
+    return res.status(400).json({
+      message: "Invalid exercise ID"
+    });
+  }
+
+  try {
+    const result = await pool.query(
+      `
+        DELETE FROM exercises
+        WHERE id = $1
+        RETURNING id
+      `,
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        message: "Exercise not found"
+      });
+    }
+
+    return res.status(204).send();
+  } catch (error) {
+    console.error("Failed to delete exercise:", error);
+
+    return res.status(500).json({
+      message: "Internal server error"
+    });
+  }
+}
+
+

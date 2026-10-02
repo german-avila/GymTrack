@@ -1,9 +1,11 @@
 import express from "express";
 import { pool } from "./database/db.js";
 import { exerciseRouter } from "./routes/exerciseRoutes.js";
+import cors from "cors";
 
 const app = express();
 
+app.use(cors());
 app.use(express.json());
 
 const port = 3000;
