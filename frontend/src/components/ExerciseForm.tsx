@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
 import type { Exercise } from "../types/Exercise";
+import {
+  createExercise,
+  updateExercise
+} from "../services/exerciseService";
 
 type ExerciseFormProps = {
   onExerciseCreated: () => void;
@@ -42,23 +46,20 @@ function ExerciseForm({
     setError(null);
 
     try {
-      const url = editingExercise
-        ? `http://localhost:3000/api/exercises/${editingExercise.id}`
-        : "http://localhost:3000/api/exercises";
-
-      const method = editingExercise ? "PATCH" : "POST";
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          name,
-          muscleGroup,
-          description
-        })
-      });
+      if (editingExercise) {
+        await updateExercise(
+            editingExercise.id,
+            name,
+            muscleGroup,
+            description
+        );
+        } else {
+        await createExercise(
+            name,
+            muscleGroup,
+            description
+        );
+    }
 
       if (!response.ok) {
         throw new Error("Failed to save exercise");

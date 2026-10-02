@@ -2,6 +2,10 @@ import { useEffect, useState } from "react";
 import ExerciseForm from "./components/ExerciseForm";
 import ExerciseList from "./components/ExerciseList";
 import type { Exercise } from "./types/Exercise";
+import {
+  deleteExercise as deleteExerciseRequest,
+  getExercises
+} from "./services/exerciseService";
 
 function App() {
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -11,13 +15,7 @@ function App() {
 
   async function loadExercises() {
     try {
-      const response = await fetch("http://localhost:3000/api/exercises");
-
-      if (!response.ok) {
-        throw new Error("Failed to load exercises");
-      }
-
-      const data: Exercise[] = await response.json();
+      const data = await getExercises();
 
       setExercises(data);
       setError(null);
@@ -30,17 +28,7 @@ function App() {
 
   async function deleteExercise(id: number) {
     try {
-      const response = await fetch(
-        `http://localhost:3000/api/exercises/${id}`,
-        {
-          method: "DELETE"
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to delete exercise");
-      }
-
+      await deleteExerciseRequest(id);
       await loadExercises();
     } catch {
       setError("No se pudo eliminar el ejercicio.");
