@@ -17,6 +17,7 @@ import {
   removeExerciseFromRoutine,
   addExerciseToRoutine
 } from "./services/routineService";
+import RoutineExerciseManager from "./components/RoutineExerciseManager";
 
 function App() {
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -187,62 +188,12 @@ async function removeExerciseFromSelectedRoutine(exerciseId: number) {
         />
 
         {selectedRoutine && (
-          <section>
-            <h3>Ejercicios de {selectedRoutine.name}</h3>
-
-            <h4>En la rutina</h4>
-
-            {selectedRoutine.exercises &&
-            selectedRoutine.exercises.length > 0 ? (
-              <ul>
-                {selectedRoutine.exercises.map((exercise) => (
-                  <li key={exercise.id}>
-                    <strong>{exercise.name}</strong> - {exercise.muscleGroup}
-
-                    <button
-                      className="danger-button"
-                      onClick={() =>
-                        removeExerciseFromSelectedRoutine(exercise.id)
-                      }
-                    >
-                      Quitar
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p>Esta rutina todavía no tiene ejercicios.</p>
-            )}
-
-            <h4>Añadir ejercicios</h4>
-
-            <ul>
-              {exercises.map((exercise) => {
-                const isInRoutine = selectedRoutine.exercises?.some(
-                  (routineExercise) => routineExercise.id === exercise.id
-                );
-
-                if (isInRoutine) {
-                  return null;
-                }
-
-                return (
-                  <li key={exercise.id}>
-                    <strong>{exercise.name}</strong> - {exercise.muscleGroup}
-
-                    <button
-                      className="primary-button"
-                      onClick={() =>
-                        addExerciseToSelectedRoutine(exercise.id)
-                      }
-                    >
-                      Añadir
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </section>
+          <RoutineExerciseManager
+            routine={selectedRoutine}
+            exercises={exercises}
+            onAddExercise={addExerciseToSelectedRoutine}
+            onRemoveExercise={removeExerciseFromSelectedRoutine}
+          />
         )}
 
       </section>
