@@ -18,6 +18,11 @@ import {
   addExerciseToRoutine
 } from "./services/routineService";
 import RoutineExerciseManager from "./components/RoutineExerciseManager";
+import WorkoutForm from "./components/WorkoutForm";
+import WorkoutList from "./components/WorkoutList";
+import type { Workout } from "./types/Workout";
+import { getWorkouts } from "./services/workoutService";
+
 
 function App() {
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -28,6 +33,9 @@ function App() {
   const [editingRoutine, setEditingRoutine] = useState<Routine | null>(null);
   const [routineError, setRoutineError] = useState<string | null>(null);
   const [selectedRoutine, setSelectedRoutine] = useState<Routine | null>(null);
+  const [workouts, setWorkouts] = useState<Workout[]>([]);
+  const [workoutError, setWorkoutError] = useState<string | null>(null);
+
 
   async function loadExercises() {
     try {
@@ -72,6 +80,17 @@ function App() {
       setRoutineError(null);
     } catch {
       setRoutineError("No se pudieron cargar las rutinas.");
+    }
+  }
+
+  async function loadWorkouts() {
+    try {
+      const data = await getWorkouts();
+      setWorkouts(data);
+      setWorkoutError(null);
+    } catch (error) {
+      console.error(error);
+      setWorkoutError("No se pudieron cargar los entrenamientos");
     }
   }
 
@@ -142,6 +161,7 @@ async function removeExerciseFromSelectedRoutine(exerciseId: number) {
   useEffect(() => {
     loadExercises();
     loadRoutines();
+    loadWorkouts();
   }, []);
 
   return (
@@ -196,6 +216,19 @@ async function removeExerciseFromSelectedRoutine(exerciseId: number) {
           />
         )}
 
+      </section>
+      
+      <section>
+        <WorkoutForm
+          routines={routines}
+          onWorkoutCreated={loadWorkouts}
+        />
+
+        <h2>Entrenamientos</h2>
+
+        {workoutError && <p>{workoutError}</p>}
+
+        <WorkoutList workouts={workouts} />
       </section>
 
     </main>
