@@ -43,3 +43,36 @@ export async function createWorkout(
 
   return response.json();
 }
+
+export async function updateWorkout(
+    id: number,
+    routineId: number | null,
+    notes: string
+    ): Promise<Workout> {
+    const response = await fetch(`${API_URL}/${id}`, {
+        method: "PATCH",
+        headers: {
+        "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+        routineId,
+        notes
+        })
+    });
+
+    if (!response.ok) {
+        throw new Error("Failed to update workout");
+    }
+
+    return response.json();
+    }
+
+    export async function deleteWorkout(id: number): Promise<void> {
+    const response = await fetch(`${API_URL}/${id}`, {
+        method: "DELETE"
+    });
+
+    if (!response.ok) {
+        throw new Error("Failed to delete workout");
+    }
+}

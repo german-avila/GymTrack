@@ -21,8 +21,10 @@ import RoutineExerciseManager from "./components/RoutineExerciseManager";
 import WorkoutForm from "./components/WorkoutForm";
 import WorkoutList from "./components/WorkoutList";
 import type { Workout } from "./types/Workout";
-import { getWorkouts } from "./services/workoutService";
-
+import {
+  deleteWorkout as deleteWorkoutRequest,
+  getWorkouts
+} from "./services/workoutService";
 
 function App() {
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -35,8 +37,8 @@ function App() {
   const [selectedRoutine, setSelectedRoutine] = useState<Routine | null>(null);
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [workoutError, setWorkoutError] = useState<string | null>(null);
-
-
+  const [editingWorkout, setEditingWorkout] = useState<Workout | null>(null);
+  
   async function loadExercises() {
     try {
       const data = await getExercises();
@@ -91,6 +93,33 @@ function App() {
     } catch (error) {
       console.error(error);
       setWorkoutError("No se pudieron cargar los entrenamientos");
+    }
+  }
+
+  function startEditingWorkout(workout: Workout) {
+  setEditingWorkout(workout);
+}
+
+  function cancelEditingWorkout() {
+    setEditingWorkout(null);
+  }
+
+  async function handleWorkoutSaved() {
+    await loadWorkouts();
+    setEditingWorkout(null);
+  }
+
+  async function deleteWorkout(id: number) {
+    try {
+      await deleteWorkoutRequest(id);
+      await loadWorkouts();
+
+      if (editingWorkout?.id === id) {
+        setEditingWorkout(null);
+      }
+    } catch (error) {
+      console.error(error);
+      setWorkoutError("No se pudo eliminar el entrenamiento");
     }
   }
 
@@ -221,14 +250,20 @@ async function removeExerciseFromSelectedRoutine(exerciseId: number) {
       <section>
         <WorkoutForm
           routines={routines}
-          onWorkoutCreated={loadWorkouts}
+          editingWorkout={editingWorkout}
+          onWorkoutSaved={handleWorkoutSaved}
+          onCancelEdit={cancelEditingWorkout}
         />
 
         <h2>Entrenamientos</h2>
 
         {workoutError && <p>{workoutError}</p>}
 
-        <WorkoutList workouts={workouts} />
+        <WorkoutList
+          workouts={workouts}
+          onEditWorkout={startEditingWorkout}
+          onDeleteWorkout={deleteWorkout}
+        />
       </section>
 
     </main>

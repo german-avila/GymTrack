@@ -1,20 +1,43 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Routine } from "../types/Routine";
-import { createWorkout } from "../services/workoutService";
+import type { Workout } from "../types/Workout";
+import {
+  createWorkout,
+  updateWorkout
+} from "../services/workoutService";
 
 type WorkoutFormProps = {
   routines: Routine[];
-  onWorkoutCreated: () => void;
+  editingWorkout: Workout | null;
+  onWorkoutSaved: () => void;
+  onCancelEdit: () => void;
 };
 
 function WorkoutForm({
   routines,
-  onWorkoutCreated
+  editingWorkout,
+  onWorkoutSaved,
+  onCancelEdit
 }: WorkoutFormProps) {
   const [routineId, setRoutineId] = useState<string>("");
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (editingWorkout) {
+      setRoutineId(
+        editingWorkout.routineId === null
+          ? ""
+          : String(editingWorkout.routineId)
+      );
+
+      setNotes(editingWorkout.notes ?? "");
+    } else {
+      setRoutineId("");
+      setNotes("");
+    }
+  }, [editingWorkout]);
 
   async function handleSubmit(
     event: React.FormEvent<HTMLFormElement>
@@ -24,22 +47,35 @@ function WorkoutForm({
     setIsSubmitting(true);
     setError(null);
 
-    try {
-      const selectedRoutineId =
-        routineId === "" ? null : Number(routineId);
+    const selectedRoutineId =
+      routineId === "" ? null : Number(routineId);
 
-      await createWorkout(
-        selectedRoutineId,
-        notes
-      );
+    try {
+      if (editingWorkout) {
+        await updateWorkout(
+          editingWorkout.id,
+          selectedRoutineId,
+          notes
+        );
+      } else {
+        await createWorkout(
+          selectedRoutineId,
+          notes
+        );
+      }
 
       setRoutineId("");
       setNotes("");
 
-      onWorkoutCreated();
+      onWorkoutSaved();
     } catch (error) {
       console.error(error);
-      setError("No se pudo crear el entrenamiento");
+
+      setError(
+        editingWorkout
+          ? "No se pudo actualizar el entrenamiento"
+          : "No se pudo crear el entrenamiento"
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -47,7 +83,11 @@ function WorkoutForm({
 
   return (
     <form className="exercise-form" onSubmit={handleSubmit}>
-      <h2>Nuevo entrenamiento</h2>
+      <h2>
+        {editingWorkout
+          ? "Editar entrenamiento"
+          : "Nuevo entrenamiento"}
+      </h2>
 
       <div className="form-group">
         <label htmlFor="routine">Rutina</label>
@@ -55,7 +95,9 @@ function WorkoutForm({
         <select
           id="routine"
           value={routineId}
-          onChange={(event) => setRoutineId(event.target.value)}
+          onChange={(event) =>
+            setRoutineId(event.target.value)
+          }
         >
           <option value="">
             Entrenamiento libre
@@ -78,7 +120,9 @@ function WorkoutForm({
         <textarea
           id="notes"
           value={notes}
-          onChange={(event) => setNotes(event.target.value)}
+          onChange={(event) =>
+            setNotes(event.target.value)
+          }
           placeholder="¿Cómo ha ido el entrenamiento?"
         />
       </div>
@@ -91,9 +135,21 @@ function WorkoutForm({
         disabled={isSubmitting}
       >
         {isSubmitting
-          ? "Creando..."
-          : "Crear entrenamiento"}
+          ? "Guardando..."
+          : editingWorkout
+            ? "Guardar cambios"
+            : "Crear entrenamiento"}
       </button>
+
+      {editingWorkout && (
+        <button
+          className="secondary-button"
+          type="button"
+          onClick={onCancelEdit}
+        >
+          Cancelar
+        </button>
+      )}
     </form>
   );
 }

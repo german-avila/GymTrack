@@ -2,9 +2,15 @@ import type { Workout } from "../types/Workout";
 
 type WorkoutListProps = {
   workouts: Workout[];
+  onEditWorkout: (workout: Workout) => void;
+  onDeleteWorkout: (id: number) => void;
 };
 
-function WorkoutList({ workouts }: WorkoutListProps) {
+function WorkoutList({
+  workouts,
+  onEditWorkout,
+  onDeleteWorkout
+}: WorkoutListProps) {
   if (workouts.length === 0) {
     return <p>No hay entrenamientos registrados.</p>;
   }
@@ -26,6 +32,20 @@ function WorkoutList({ workouts }: WorkoutListProps) {
           {workout.notes && (
             <p>{workout.notes}</p>
           )}
+
+          <button
+            className="secondary-button"
+            onClick={() => onEditWorkout(workout)}
+          >
+            Editar
+          </button>
+
+          <button
+            className="danger-button"
+            onClick={() => onDeleteWorkout(workout.id)}
+          >
+            Eliminar
+          </button>
         </li>
       ))}
     </ul>
