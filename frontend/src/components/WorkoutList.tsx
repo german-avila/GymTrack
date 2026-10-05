@@ -4,12 +4,14 @@ type WorkoutListProps = {
   workouts: Workout[];
   onEditWorkout: (workout: Workout) => void;
   onDeleteWorkout: (id: number) => void;
+  onViewWorkout: (id: number) => void;
 };
 
 function WorkoutList({
   workouts,
   onEditWorkout,
-  onDeleteWorkout
+  onDeleteWorkout,
+  onViewWorkout
 }: WorkoutListProps) {
   if (workouts.length === 0) {
     return <p>No hay entrenamientos registrados.</p>;
@@ -32,6 +34,13 @@ function WorkoutList({
           {workout.notes && (
             <p>{workout.notes}</p>
           )}
+          
+          <button
+            className="primary-button"
+            onClick={() => onViewWorkout(workout.id)}
+          >
+            Ver detalle
+          </button>
 
           <button
             className="secondary-button"

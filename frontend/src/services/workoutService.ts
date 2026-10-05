@@ -76,3 +76,25 @@ export async function updateWorkout(
         throw new Error("Failed to delete workout");
     }
 }
+
+export async function addExerciseToWorkout(
+    workoutId: number,
+    exerciseId: number
+    ): Promise<void> {
+    const response = await fetch(
+        `${API_URL}/${workoutId}/exercises`,
+        {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            exerciseId
+        })
+        }
+    );
+
+    if (!response.ok) {
+        throw new Error("Failed to add exercise to workout");
+    }
+}

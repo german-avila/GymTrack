@@ -23,8 +23,12 @@ import WorkoutList from "./components/WorkoutList";
 import type { Workout } from "./types/Workout";
 import {
   deleteWorkout as deleteWorkoutRequest,
-  getWorkouts
+  getWorkouts,
+  getWorkoutById,
+  addExerciseToWorkout
 } from "./services/workoutService";
+import WorkoutDetail from "./components/WorkoutDetail";
+
 
 function App() {
   const [exercises, setExercises] = useState<Exercise[]>([]);
@@ -38,7 +42,9 @@ function App() {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
   const [workoutError, setWorkoutError] = useState<string | null>(null);
   const [editingWorkout, setEditingWorkout] = useState<Workout | null>(null);
-  
+  const [selectedWorkout, setSelectedWorkout] = useState<Workout | null>(null);
+
+
   async function loadExercises() {
     try {
       const data = await getExercises();
@@ -120,6 +126,43 @@ function App() {
     } catch (error) {
       console.error(error);
       setWorkoutError("No se pudo eliminar el entrenamiento");
+    }
+  }
+
+  async function viewWorkout(id: number) {
+    try {
+      const workout = await getWorkoutById(id);
+      setSelectedWorkout(workout);
+      setWorkoutError(null);
+    } catch (error) {
+      console.error(error);
+      setWorkoutError("No se pudo cargar el entrenamiento");
+    }
+  }
+
+  async function addExerciseToSelectedWorkout(
+    exerciseId: number
+  ) {
+    if (!selectedWorkout) {
+      return;
+    }
+
+    try {
+      await addExerciseToWorkout(
+        selectedWorkout.id,
+        exerciseId
+      );
+
+      const updatedWorkout =
+        await getWorkoutById(selectedWorkout.id);
+
+      setSelectedWorkout(updatedWorkout);
+      setWorkoutError(null);
+    } catch (error) {
+      console.error(error);
+      setWorkoutError(
+        "No se pudo añadir el ejercicio al entrenamiento"
+      );
     }
   }
 
@@ -261,9 +304,19 @@ async function removeExerciseFromSelectedRoutine(exerciseId: number) {
 
         <WorkoutList
           workouts={workouts}
+          onViewWorkout={viewWorkout}
           onEditWorkout={startEditingWorkout}
           onDeleteWorkout={deleteWorkout}
         />
+
+        {selectedWorkout && (
+          <WorkoutDetail
+            workout={selectedWorkout}
+            exercises={exercises}
+            onAddExercise={addExerciseToSelectedWorkout}
+          />
+        )}
+
       </section>
 
     </main>
