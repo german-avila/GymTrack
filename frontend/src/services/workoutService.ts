@@ -98,3 +98,29 @@ export async function addExerciseToWorkout(
         throw new Error("Failed to add exercise to workout");
     }
 }
+
+export async function addSetToWorkoutExercise(
+    workoutExerciseId: number,
+    setNumber: number,
+    reps: number,
+    weight: number | null
+  ): Promise<void> {
+    const response = await fetch(
+      `${API_URL}/exercises/${workoutExerciseId}/sets`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          setNumber,
+          reps,
+          weight
+        })
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to add set to workout exercise");
+    }
+}

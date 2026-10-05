@@ -25,7 +25,8 @@ import {
   deleteWorkout as deleteWorkoutRequest,
   getWorkouts,
   getWorkoutById,
-  addExerciseToWorkout
+  addExerciseToWorkout,
+  addSetToWorkoutExercise
 } from "./services/workoutService";
 import WorkoutDetail from "./components/WorkoutDetail";
 
@@ -162,6 +163,37 @@ function App() {
       console.error(error);
       setWorkoutError(
         "No se pudo añadir el ejercicio al entrenamiento"
+      );
+    }
+  }
+
+  async function addSetToSelectedWorkoutExercise(
+    workoutExerciseId: number,
+    setNumber: number,
+    reps: number,
+    weight: number | null
+  ) {
+    if (!selectedWorkout) {
+      return;
+    }
+
+    try {
+      await addSetToWorkoutExercise(
+        workoutExerciseId,
+        setNumber,
+        reps,
+        weight
+      );
+
+      const updatedWorkout =
+        await getWorkoutById(selectedWorkout.id);
+
+      setSelectedWorkout(updatedWorkout);
+      setWorkoutError(null);
+    } catch (error) {
+      console.error(error);
+      setWorkoutError(
+        "No se pudo añadir la serie"
       );
     }
   }
@@ -314,6 +346,7 @@ async function removeExerciseFromSelectedRoutine(exerciseId: number) {
             workout={selectedWorkout}
             exercises={exercises}
             onAddExercise={addExerciseToSelectedWorkout}
+            onAddSet={addSetToSelectedWorkoutExercise}
           />
         )}
 
