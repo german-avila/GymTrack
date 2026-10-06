@@ -6,6 +6,16 @@ import type { ExerciseProgress } from "../types/Progress";
 import { getExercises } from "../services/exerciseService";
 import { getExerciseProgress } from "../services/progressService";
 
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis
+} from "recharts";
+
 function ProgressPage() {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [selectedExerciseId, setSelectedExerciseId] =
@@ -15,6 +25,60 @@ function ProgressPage() {
     useState<ExerciseProgress | null>(null);
 
   const [error, setError] = useState<string | null>(null);
+
+  let chartData: {
+  date: string;
+  weight: number;
+}[] = [];
+
+if (progress) {
+  const bestWeightByWorkout = new Map<
+    number,
+    {
+      performedAt: string;
+      weight: number;
+    }
+  >();
+
+  for (const item of progress.history) {
+    if (item.weight === null) {
+      continue;
+    }
+
+    const weight = Number(item.weight);
+
+    const currentBest =
+      bestWeightByWorkout.get(item.workoutId);
+
+    if (
+      !currentBest ||
+      weight > currentBest.weight
+    ) {
+      bestWeightByWorkout.set(
+        item.workoutId,
+        {
+          performedAt: item.performedAt,
+          weight
+        }
+      );
+    }
+  }
+
+  chartData = Array.from(
+    bestWeightByWorkout.values()
+  )
+    .sort(
+      (a, b) =>
+        new Date(a.performedAt).getTime() -
+        new Date(b.performedAt).getTime()
+    )
+    .map((item) => ({
+      date: new Date(
+        item.performedAt
+      ).toLocaleDateString("es-ES"),
+      weight: item.weight
+    }));
+}
 
   async function loadExercises() {
     try {
@@ -154,6 +218,34 @@ function ProgressPage() {
               <p>repeticiones</p>
             </article>
           </div>
+
+          {chartData.length > 0 && (
+            <div className="dashboard-section">
+                <h3>Evolución del peso</h3>
+
+                <div className="progress-chart">
+                <ResponsiveContainer width="100%" height={300}>
+                    <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+
+                    <XAxis dataKey="date" />
+
+                    <YAxis />
+
+                    <Tooltip />
+
+                    <Line
+                        type="monotone"
+                        dataKey="weight"
+                        name="Peso"
+                        stroke="#2563eb"
+                        strokeWidth={3}
+                    />
+                    </LineChart>
+                </ResponsiveContainer>
+                </div>
+            </div>
+            )}
 
           <div className="dashboard-section">
             <h3>Historial</h3>
