@@ -1566,3 +1566,284 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* =========================
+   EXERCISE PICKER
+========================= */
+
+.exercise-picker {
+  display: flex;
+  flex-direction: column;
+
+  gap: 16px;
+
+  margin-bottom: 24px;
+
+  padding: 18px;
+
+  background-color: #171a21;
+  border: 1px solid #292f39;
+  border-radius: 14px;
+}
+
+.exercise-picker-filters {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+
+  gap: 14px;
+}
+
+.exercise-picker-filters > div {
+  display: flex;
+  flex-direction: column;
+
+  gap: 7px;
+}
+
+.exercise-picker-filters label {
+  color: #94a3b8;
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.exercise-picker-filters input,
+.exercise-picker-filters select {
+  width: 100%;
+
+  padding: 11px 12px;
+
+  background-color: #0f1115;
+  border: 1px solid #303641;
+  border-radius: 9px;
+
+  color: #f8fafc;
+
+  font: inherit;
+
+  outline: none;
+}
+
+.exercise-picker-filters input:focus,
+.exercise-picker-filters select:focus {
+  border-color: #d4a72c;
+}
+
+.exercise-picker-results {
+  display: flex;
+  flex-direction: column;
+
+  gap: 8px;
+
+  max-height: 280px;
+
+  overflow-y: auto;
+
+  padding-right: 4px;
+}
+
+.exercise-picker-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  width: 100%;
+
+  padding: 12px 14px;
+
+  background-color: #11141a;
+  border: 1px solid #292f39;
+  border-radius: 10px;
+
+  color: #f8fafc;
+
+  text-align: left;
+
+  cursor: pointer;
+
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.exercise-picker-option:hover {
+  border-color: #4a515d;
+}
+
+.exercise-picker-option.selected {
+  background-color: rgb(212 167 44 / 0.08);
+  border-color: #d4a72c;
+}
+
+.exercise-picker-option > div {
+  display: flex;
+  flex-direction: column;
+
+  gap: 3px;
+}
+
+.exercise-picker-option strong {
+  font-size: 14px;
+}
+
+.exercise-picker-option span {
+  color: #94a3b8;
+
+  font-size: 12px;
+}
+
+.exercise-picker-option small {
+  color: #d4a72c;
+
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.4px;
+}
+
+.exercise-picker-empty {
+  padding: 18px;
+
+  border: 1px dashed #303641;
+  border-radius: 10px;
+
+  color: #64748b;
+
+  text-align: center;
+}
+
+.exercise-picker .primary-button:disabled {
+  opacity: 0.45;
+
+  cursor: not-allowed;
+}
+
+@media (max-width: 700px) {
+  .exercise-picker-filters {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* =========================
+   WORKOUT DETAIL MODAL
+========================= */
+
+.workout-modal-backdrop {
+  position: fixed;
+  inset: 0;
+
+  z-index: 1000;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 28px;
+
+  background-color: rgb(0 0 0 / 0.72);
+
+  backdrop-filter: blur(4px);
+}
+
+.workout-modal {
+  display: flex;
+  flex-direction: column;
+
+  width: min(1100px, 100%);
+  max-height: calc(100vh - 56px);
+
+  background-color: #12151b;
+  border: 1px solid #303641;
+  border-radius: 18px;
+
+  box-shadow:
+    0 24px 70px rgb(0 0 0 / 0.5);
+
+  overflow: hidden;
+}
+
+.workout-modal-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 20px;
+
+  padding: 20px 24px;
+
+  background-color: #171a21;
+  border-bottom: 1px solid #292f39;
+}
+
+.workout-modal-topbar h2 {
+  margin: 4px 0 0;
+
+  font-size: 20px;
+}
+
+.workout-modal-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 38px;
+  height: 38px;
+
+  padding: 0;
+
+  background-color: #20242c;
+  border: 1px solid #343a46;
+  border-radius: 10px;
+
+  color: #cbd5e1;
+
+  font-size: 25px;
+  line-height: 1;
+
+  cursor: pointer;
+}
+
+.workout-modal-close:hover {
+  background-color: #2a2f39;
+  border-color: #d4a72c;
+
+  color: #f0c75e;
+}
+
+.workout-modal-content {
+  overflow-y: auto;
+
+  padding: 24px;
+}
+
+/*
+  WorkoutDetail ya está dentro de un contenedor
+  visual grande, así que evitamos que parezca
+  otra tarjeta gigante dentro del modal.
+*/
+.workout-modal-content .workout-detail {
+  margin: 0;
+}
+
+@media (max-width: 700px) {
+  .workout-modal-backdrop {
+    align-items: stretch;
+
+    padding: 0;
+  }
+
+  .workout-modal {
+    width: 100%;
+    max-height: 100vh;
+
+    border: none;
+    border-radius: 0;
+  }
+
+  .workout-modal-topbar {
+    padding: 16px;
+  }
+
+  .workout-modal-content {
+    padding: 16px;
+  }
+}

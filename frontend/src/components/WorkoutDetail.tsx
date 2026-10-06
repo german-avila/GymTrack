@@ -1,13 +1,14 @@
 import { useState } from "react";
 
 import ConfirmModal from "./ConfirmModal";
+import ExercisePicker from "./ExercisePicker";
 
 import type { Exercise } from "../types/Exercise";
-import type { Routine } from "../types/Routine";
 import type {
   Workout,
-  WorkoutSet
+  WorkoutExercise
 } from "../types/Workout";
+import type { Routine } from "../types/Routine";
 
 type WorkoutDetailProps = {
   workout: Workout;
@@ -41,6 +42,18 @@ type WorkoutDetailProps = {
   ) => void;
 };
 
+type NewSetForm = {
+  reps: string;
+  weight: string;
+};
+
+type EditingSetForm = {
+  setId: number;
+  setNumber: number;
+  reps: string;
+  weight: string;
+};
+
 function WorkoutDetail({
   workout,
   exercises,
@@ -51,241 +64,291 @@ function WorkoutDetail({
   onUpdateSet,
   onDeleteSet
 }: WorkoutDetailProps) {
-  const [selectedExerciseId, setSelectedExerciseId] =
-    useState<string>("");
+  const [
+    newSetForms,
+    setNewSetForms
+  ] = useState<
+    Record<number, NewSetForm>
+  >({});
 
   const [
-    addingSetForExerciseId,
-    setAddingSetForExerciseId
-  ] = useState<number | null>(null);
-
-  const [newSetNumber, setNewSetNumber] =
-    useState<string>("1");
-
-  const [newSetReps, setNewSetReps] =
-    useState<string>("");
-
-  const [newSetWeight, setNewSetWeight] =
-    useState<string>("");
-
-  const [editingSetId, setEditingSetId] =
-    useState<number | null>(null);
-
-  const [editingSetNumber, setEditingSetNumber] =
-    useState<string>("");
-
-  const [editingSetReps, setEditingSetReps] =
-    useState<string>("");
-
-  const [editingSetWeight, setEditingSetWeight] =
-    useState<string>("");
+    editingSet,
+    setEditingSet
+  ] = useState<EditingSetForm | null>(
+    null
+  );
 
   const [
     exerciseToDelete,
     setExerciseToDelete
-  ] = useState<{
-    id: number;
-    name: string;
-  } | null>(null);
+  ] = useState<WorkoutExercise | null>(
+    null
+  );
 
-  const [setToDelete, setSetToDelete] =
-    useState<WorkoutSet | null>(null);
+  const [
+    setToDelete,
+    setSetToDelete
+  ] = useState<number | null>(null);
 
   const routine = routines.find(
     (routine) =>
       routine.id === workout.routineId
   );
 
-  const availableExercises =
-    exercises.filter(
-      (exercise) =>
-        !workout.exercises?.some(
-          (workoutExercise) =>
-            workoutExercise.exerciseId ===
-            exercise.id
-        )
+  const workoutExercises =
+    workout.exercises ?? [];
+
+  const performedAt =
+    new Date(
+      workout.performedAt
+    ).toLocaleString(
+      "es-ES",
+      {
+        dateStyle: "medium",
+        timeStyle: "short"
+      }
     );
 
-  function handleAddExercise() {
-    if (selectedExerciseId === "") {
-      return;
-    }
-
-    onAddExercise(
-      Number(selectedExerciseId)
+  function getNewSetForm(
+    workoutExerciseId: number
+  ): NewSetForm {
+    return (
+      newSetForms[
+        workoutExerciseId
+      ] ?? {
+        reps: "",
+        weight: ""
+      }
     );
-
-    setSelectedExerciseId("");
   }
 
-  function startAddingSet(
+  function updateNewSetForm(
     workoutExerciseId: number,
-    currentSetCount: number
+    field: keyof NewSetForm,
+    value: string
   ) {
-    setAddingSetForExerciseId(
-      workoutExerciseId
+    setNewSetForms(
+      (currentForms) => ({
+        ...currentForms,
+
+        [workoutExerciseId]: {
+          ...getNewSetForm(
+            workoutExerciseId
+          ),
+          [field]: value
+        }
+      })
     );
-
-    setNewSetNumber(
-      String(currentSetCount + 1)
-    );
-
-    setNewSetReps("");
-    setNewSetWeight("");
-  }
-
-  function cancelAddingSet() {
-    setAddingSetForExerciseId(null);
-    setNewSetNumber("1");
-    setNewSetReps("");
-    setNewSetWeight("");
   }
 
   function handleAddSet(
-    workoutExerciseId: number
+    workoutExercise: WorkoutExercise
   ) {
-    const setNumber =
-      Number(newSetNumber);
+    const form =
+      getNewSetForm(
+        workoutExercise.id
+      );
 
     const reps =
-      Number(newSetReps);
-
-    const weight =
-      newSetWeight.trim() === ""
-        ? null
-        : Number(newSetWeight);
+      Number(form.reps);
 
     if (
-      !Number.isInteger(setNumber) ||
-      setNumber <= 0 ||
       !Number.isInteger(reps) ||
-      reps <= 0 ||
+      reps <= 0
+    ) {
+      return;
+    }
+
+    const weight =
+      form.weight.trim() === ""
+        ? null
+        : Number(form.weight);
+
+    if (
+      weight !== null &&
       (
-        weight !== null &&
-        (
-          !Number.isFinite(weight) ||
-          weight < 0
-        )
+        Number.isNaN(weight) ||
+        weight < 0
       )
     ) {
       return;
     }
 
+    const nextSetNumber =
+      workoutExercise.sets.length > 0
+        ? Math.max(
+            ...workoutExercise.sets.map(
+              (set) =>
+                set.setNumber
+            )
+          ) + 1
+        : 1;
+
     onAddSet(
-      workoutExerciseId,
-      setNumber,
+      workoutExercise.id,
+      nextSetNumber,
       reps,
       weight
     );
 
-    cancelAddingSet();
+    setNewSetForms(
+      (currentForms) => ({
+        ...currentForms,
+
+        [workoutExercise.id]: {
+          reps: "",
+          weight: ""
+        }
+      })
+    );
   }
 
   function startEditingSet(
-    set: WorkoutSet
+    setId: number,
+    setNumber: number,
+    reps: number,
+    weight: string | null
   ) {
-    setEditingSetId(set.id);
-
-    setEditingSetNumber(
-      String(set.setNumber)
-    );
-
-    setEditingSetReps(
-      String(set.reps)
-    );
-
-    setEditingSetWeight(
-      set.weight ?? ""
-    );
+    setEditingSet({
+      setId,
+      setNumber,
+      reps: String(reps),
+      weight: weight ?? ""
+    });
   }
 
   function cancelEditingSet() {
-    setEditingSetId(null);
-    setEditingSetNumber("");
-    setEditingSetReps("");
-    setEditingSetWeight("");
+    setEditingSet(null);
   }
 
-  function handleUpdateSet(
-    setId: number
-  ) {
-    const setNumber =
-      Number(editingSetNumber);
+  function handleUpdateSet() {
+    if (!editingSet) {
+      return;
+    }
 
     const reps =
-      Number(editingSetReps);
-
-    const weight =
-      editingSetWeight.trim() === ""
-        ? null
-        : Number(editingSetWeight);
+      Number(editingSet.reps);
 
     if (
-      !Number.isInteger(setNumber) ||
-      setNumber <= 0 ||
       !Number.isInteger(reps) ||
-      reps <= 0 ||
+      reps <= 0
+    ) {
+      return;
+    }
+
+    const weight =
+      editingSet.weight.trim() === ""
+        ? null
+        : Number(
+            editingSet.weight
+          );
+
+    if (
+      weight !== null &&
       (
-        weight !== null &&
-        (
-          !Number.isFinite(weight) ||
-          weight < 0
-        )
+        Number.isNaN(weight) ||
+        weight < 0
       )
     ) {
       return;
     }
 
     onUpdateSet(
-      setId,
-      setNumber,
+      editingSet.setId,
+      editingSet.setNumber,
       reps,
       weight
     );
 
-    cancelEditingSet();
+    setEditingSet(null);
   }
 
   return (
     <section className="workout-detail">
-      <div className="dashboard-header">
+      <div className="workout-detail-header">
         <div>
-          <span className="workout-date-label">
-            Entrenamiento
+          <span className="section-eyebrow">
+            Detalle del entrenamiento
           </span>
 
           <h2>
-            {new Date(
-              workout.performedAt
-            ).toLocaleDateString(
-              "es-ES"
-            )}
+            {routine?.name ??
+              "Entrenamiento libre"}
           </h2>
 
           <p>
-            {workout.routineId === null
-              ? "Entrenamiento libre"
-              : routine?.name ??
-                "Rutina desconocida"}
+            {performedAt}
           </p>
         </div>
       </div>
 
       {workout.notes && (
-        <div className="workout-notes">
-          <strong>Notas</strong>
+        <div className="workout-detail-notes">
+          <strong>
+            Notas
+          </strong>
 
-          <p>{workout.notes}</p>
+          <p>
+            {workout.notes}
+          </p>
         </div>
       )}
 
-      <div className="dashboard-section">
-        <h3>
-          Ejercicios del entrenamiento
-        </h3>
+      <div className="workout-detail-section">
+        <div className="workout-detail-section-header">
+          <div>
+            <span className="section-eyebrow">
+              Ejercicios
+            </span>
 
-        {!workout.exercises ||
-        workout.exercises.length === 0 ? (
+            <h3>
+              Añadir ejercicio
+            </h3>
+          </div>
+        </div>
+
+        <ExercisePicker
+          exercises={exercises}
+          excludedExerciseIds={
+            workoutExercises.map(
+              (exercise) =>
+                exercise.exerciseId
+            )
+          }
+          onSelectExercise={
+            onAddExercise
+          }
+          buttonText="Añadir al entrenamiento"
+        />
+      </div>
+
+      <div className="workout-detail-section">
+        <div className="workout-detail-section-header">
+          <div>
+            <span className="section-eyebrow">
+              Registro
+            </span>
+
+            <h3>
+              Ejercicios realizados
+            </h3>
+          </div>
+
+          <span className="workout-exercise-count">
+            {
+              workoutExercises.length
+            }
+            {" "}
+            {
+              workoutExercises.length ===
+              1
+                ? "ejercicio"
+                : "ejercicios"
+            }
+          </span>
+        </div>
+
+        {workoutExercises.length === 0 ? (
           <div className="empty-state">
             <p>
               Este entrenamiento todavía
@@ -294,264 +357,218 @@ function WorkoutDetail({
           </div>
         ) : (
           <div className="workout-exercise-list">
-            {workout.exercises.map(
-              (workoutExercise) => (
-                <article
-                  className="workout-exercise-card"
-                  key={workoutExercise.id}
-                >
-                  <div className="workout-exercise-header">
-                    <div>
-                      <h4>
-                        {
-                          workoutExercise.name
-                        }
-                      </h4>
+            {workoutExercises.map(
+              (workoutExercise) => {
+                const newSetForm =
+                  getNewSetForm(
+                    workoutExercise.id
+                  );
 
-                      <p>
-                        {
-                          workoutExercise
-                            .muscleGroup
+                return (
+                  <article
+                    className="workout-exercise-card"
+                    key={
+                      workoutExercise.id
+                    }
+                  >
+                    <div className="workout-exercise-header">
+                      <div>
+                        <span className="exercise-card-label">
+                          {
+                            workoutExercise.muscleGroup
+                          }
+                        </span>
+
+                        <h4>
+                          {
+                            workoutExercise.name
+                          }
+                        </h4>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="danger-button"
+                        onClick={() =>
+                          setExerciseToDelete(
+                            workoutExercise
+                          )
                         }
-                      </p>
+                      >
+                        Quitar ejercicio
+                      </button>
                     </div>
 
-                    <button
-                      className="danger-button"
-                      type="button"
-                      onClick={() =>
-                        setExerciseToDelete(
-                          {
-                            id:
-                              workoutExercise
-                                .id,
-                            name:
-                              workoutExercise
-                                .name
-                          }
-                        )
-                      }
-                    >
-                      Eliminar ejercicio
-                    </button>
-                  </div>
-
-                  <div className="workout-sets">
                     {workoutExercise.sets
                       .length === 0 ? (
-                      <div className="empty-state">
+                      <div className="empty-state compact">
                         <p>
                           Todavía no hay
                           series registradas.
                         </p>
                       </div>
                     ) : (
-                      workoutExercise.sets.map(
-                        (set) => (
-                          <div
-                            className="workout-set-row"
-                            key={set.id}
-                          >
-                            {editingSetId ===
-                            set.id ? (
-                              <>
-                                <div className="form-group">
-                                  <label>
-                                    Serie
-                                  </label>
+                      <div className="workout-set-list">
+                        <div className="workout-set-row workout-set-header-row">
+                          <span>
+                            Serie
+                          </span>
 
-                                  <input
-                                    type="number"
-                                    min="1"
-                                    value={
-                                      editingSetNumber
-                                    }
-                                    onChange={(
-                                      event
-                                    ) =>
-                                      setEditingSetNumber(
+                          <span>
+                            Peso
+                          </span>
+
+                          <span>
+                            Reps
+                          </span>
+
+                          <span>
+                            Acciones
+                          </span>
+                        </div>
+
+                        {workoutExercise.sets.map(
+                          (set) => {
+                            const isEditing =
+                              editingSet?.setId ===
+                              set.id;
+
+                            return (
+                              <div
+                                className="workout-set-row"
+                                key={
+                                  set.id
+                                }
+                              >
+                                <span>
+                                  {
+                                    set.setNumber
+                                  }
+                                </span>
+
+                                {isEditing &&
+                                editingSet ? (
+                                  <>
+                                    <input
+                                      type="number"
+                                      min="0"
+                                      step="0.5"
+                                      value={
+                                        editingSet.weight
+                                      }
+                                      onChange={(
                                         event
-                                          .target
-                                          .value
-                                      )
-                                    }
-                                  />
-                                </div>
+                                      ) =>
+                                        setEditingSet(
+                                          {
+                                            ...editingSet,
+                                            weight:
+                                              event
+                                                .target
+                                                .value
+                                          }
+                                        )
+                                      }
+                                      placeholder="kg"
+                                    />
 
-                                <div className="form-group">
-                                  <label>
-                                    Reps
-                                  </label>
-
-                                  <input
-                                    type="number"
-                                    min="1"
-                                    value={
-                                      editingSetReps
-                                    }
-                                    onChange={(
-                                      event
-                                    ) =>
-                                      setEditingSetReps(
+                                    <input
+                                      type="number"
+                                      min="1"
+                                      value={
+                                        editingSet.reps
+                                      }
+                                      onChange={(
                                         event
-                                          .target
-                                          .value
-                                      )
-                                    }
-                                  />
-                                </div>
+                                      ) =>
+                                        setEditingSet(
+                                          {
+                                            ...editingSet,
+                                            reps:
+                                              event
+                                                .target
+                                                .value
+                                          }
+                                        )
+                                      }
+                                    />
 
-                                <div className="form-group">
-                                  <label>
-                                    Peso (kg)
-                                  </label>
+                                    <div className="workout-set-actions">
+                                      <button
+                                        type="button"
+                                        className="primary-button"
+                                        onClick={
+                                          handleUpdateSet
+                                        }
+                                      >
+                                        Guardar
+                                      </button>
 
-                                  <input
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    value={
-                                      editingSetWeight
-                                    }
-                                    onChange={(
-                                      event
-                                    ) =>
-                                      setEditingSetWeight(
-                                        event
-                                          .target
-                                          .value
-                                      )
-                                    }
-                                  />
-                                </div>
+                                      <button
+                                        type="button"
+                                        className="secondary-button"
+                                        onClick={
+                                          cancelEditingSet
+                                        }
+                                      >
+                                        Cancelar
+                                      </button>
+                                    </div>
+                                  </>
+                                ) : (
+                                  <>
+                                    <span>
+                                      {set.weight !==
+                                      null
+                                        ? `${set.weight} kg`
+                                        : "—"}
+                                    </span>
 
-                                <div>
-                                  <button
-                                    className="primary-button"
-                                    type="button"
-                                    onClick={() =>
-                                      handleUpdateSet(
-                                        set.id
-                                      )
-                                    }
-                                  >
-                                    Guardar
-                                  </button>
+                                    <span>
+                                      {
+                                        set.reps
+                                      }
+                                    </span>
 
-                                  <button
-                                    className="secondary-button"
-                                    type="button"
-                                    onClick={
-                                      cancelEditingSet
-                                    }
-                                  >
-                                    Cancelar
-                                  </button>
-                                </div>
-                              </>
-                            ) : (
-                              <>
-                                <div>
-                                  <strong>
-                                    Serie{" "}
-                                    {
-                                      set.setNumber
-                                    }
-                                  </strong>
-                                </div>
+                                    <div className="workout-set-actions">
+                                      <button
+                                        type="button"
+                                        className="secondary-button"
+                                        onClick={() =>
+                                          startEditingSet(
+                                            set.id,
+                                            set.setNumber,
+                                            set.reps,
+                                            set.weight
+                                          )
+                                        }
+                                      >
+                                        Editar
+                                      </button>
 
-                                <div>
-                                  <strong>
-                                    {set.reps} reps
-                                  </strong>
-                                </div>
-
-                                <div>
-                                  <strong>
-                                    {set.weight !==
-                                    null
-                                      ? `${set.weight} kg`
-                                      : "Sin peso"}
-                                  </strong>
-                                </div>
-
-                                <div>
-                                  <button
-                                    className="secondary-button"
-                                    type="button"
-                                    onClick={() =>
-                                      startEditingSet(
-                                        set
-                                      )
-                                    }
-                                  >
-                                    Editar
-                                  </button>
-
-                                  <button
-                                    className="danger-button"
-                                    type="button"
-                                    onClick={() =>
-                                      setSetToDelete(
-                                        set
-                                      )
-                                    }
-                                  >
-                                    Eliminar
-                                  </button>
-                                </div>
-                              </>
-                            )}
-                          </div>
-                        )
-                      )
+                                      <button
+                                        type="button"
+                                        className="danger-button"
+                                        onClick={() =>
+                                          setSetToDelete(
+                                            set.id
+                                          )
+                                        }
+                                      >
+                                        Eliminar
+                                      </button>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            );
+                          }
+                        )}
+                      </div>
                     )}
-                  </div>
 
-                  {addingSetForExerciseId ===
-                  workoutExercise.id ? (
-                    <div className="add-set-panel">
-                      <div className="form-group">
-                        <label>
-                          Número de serie
-                        </label>
-
-                        <input
-                          type="number"
-                          min="1"
-                          value={newSetNumber}
-                          onChange={(
-                            event
-                          ) =>
-                            setNewSetNumber(
-                              event.target
-                                .value
-                            )
-                          }
-                        />
-                      </div>
-
-                      <div className="form-group">
-                        <label>
-                          Repeticiones
-                        </label>
-
-                        <input
-                          type="number"
-                          min="1"
-                          value={newSetReps}
-                          onChange={(
-                            event
-                          ) =>
-                            setNewSetReps(
-                              event.target
-                                .value
-                            )
-                          }
-                        />
-                      </div>
-
-                      <div className="form-group">
+                    <div className="workout-add-set">
+                      <div>
                         <label>
                           Peso (kg)
                         </label>
@@ -559,123 +576,68 @@ function WorkoutDetail({
                         <input
                           type="number"
                           min="0"
-                          step="0.01"
-                          value={newSetWeight}
-                          onChange={(
-                            event
-                          ) =>
-                            setNewSetWeight(
-                              event.target
-                                .value
+                          step="0.5"
+                          value={
+                            newSetForm.weight
+                          }
+                          onChange={(event) =>
+                            updateNewSetForm(
+                              workoutExercise.id,
+                              "weight",
+                              event.target.value
                             )
                           }
+                          placeholder="Ej. 70"
+                        />
+                      </div>
+
+                      <div>
+                        <label>
+                          Repeticiones
+                        </label>
+
+                        <input
+                          type="number"
+                          min="1"
+                          value={
+                            newSetForm.reps
+                          }
+                          onChange={(event) =>
+                            updateNewSetForm(
+                              workoutExercise.id,
+                              "reps",
+                              event.target.value
+                            )
+                          }
+                          placeholder="Ej. 10"
                         />
                       </div>
 
                       <button
-                        className="primary-button"
                         type="button"
+                        className="primary-button"
                         onClick={() =>
                           handleAddSet(
-                            workoutExercise.id
+                            workoutExercise
                           )
                         }
                       >
-                        Guardar serie
-                      </button>
-
-                      <button
-                        className="secondary-button"
-                        type="button"
-                        onClick={
-                          cancelAddingSet
-                        }
-                      >
-                        Cancelar
+                        Añadir serie
                       </button>
                     </div>
-                  ) : (
-                    <button
-                      className="primary-button"
-                      type="button"
-                      onClick={() =>
-                        startAddingSet(
-                          workoutExercise.id,
-                          workoutExercise.sets
-                            .length
-                        )
-                      }
-                    >
-                      Añadir serie
-                    </button>
-                  )}
-                </article>
-              )
+                  </article>
+                );
+              }
             )}
-          </div>
-        )}
-      </div>
-
-      <div className="dashboard-section">
-        <h3>Añadir ejercicio</h3>
-
-        {availableExercises.length ===
-        0 ? (
-          <div className="empty-state">
-            <p>
-              No hay más ejercicios
-              disponibles para añadir.
-            </p>
-          </div>
-        ) : (
-          <div className="available-exercise">
-            <select
-              value={selectedExerciseId}
-              onChange={(event) =>
-                setSelectedExerciseId(
-                  event.target.value
-                )
-              }
-            >
-              <option value="">
-                Selecciona un ejercicio
-              </option>
-
-              {availableExercises.map(
-                (exercise) => (
-                  <option
-                    key={exercise.id}
-                    value={exercise.id}
-                  >
-                    {exercise.name} -{" "}
-                    {exercise.muscleGroup}
-                  </option>
-                )
-              )}
-            </select>
-
-            <button
-              className="primary-button"
-              type="button"
-              onClick={
-                handleAddExercise
-              }
-              disabled={
-                selectedExerciseId ===
-                ""
-              }
-            >
-              Añadir ejercicio
-            </button>
           </div>
         )}
       </div>
 
       {exerciseToDelete && (
         <ConfirmModal
-          title="Eliminar ejercicio"
-          message={`¿Seguro que quieres quitar "${exerciseToDelete.name}" del entrenamiento? También se eliminarán todas sus series.`}
-          confirmText="Eliminar"
+          title="Quitar ejercicio"
+          message={`¿Seguro que quieres quitar "${exerciseToDelete.name}" de este entrenamiento? También se eliminarán sus series.`}
+          confirmText="Quitar"
           onCancel={() =>
             setExerciseToDelete(null)
           }
@@ -689,17 +651,17 @@ function WorkoutDetail({
         />
       )}
 
-      {setToDelete && (
+      {setToDelete !== null && (
         <ConfirmModal
           title="Eliminar serie"
-          message={`¿Seguro que quieres eliminar la serie ${setToDelete.setNumber}?`}
+          message="¿Seguro que quieres eliminar esta serie?"
           confirmText="Eliminar"
           onCancel={() =>
             setSetToDelete(null)
           }
           onConfirm={() => {
             onDeleteSet(
-              setToDelete.id
+              setToDelete
             );
 
             setSetToDelete(null);

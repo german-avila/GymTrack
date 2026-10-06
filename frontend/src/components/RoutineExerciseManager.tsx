@@ -1,11 +1,17 @@
+import ExercisePicker from "./ExercisePicker";
+
 import type { Exercise } from "../types/Exercise";
 import type { Routine } from "../types/Routine";
 
 type RoutineExerciseManagerProps = {
   routine: Routine;
   exercises: Exercise[];
-  onAddExercise: (exerciseId: number) => void;
-  onRemoveExercise: (exerciseId: number) => void;
+  onAddExercise: (
+    exerciseId: number
+  ) => void;
+  onRemoveExercise: (
+    exerciseId: number
+  ) => void;
 };
 
 function RoutineExerciseManager({
@@ -14,105 +20,85 @@ function RoutineExerciseManager({
   onAddExercise,
   onRemoveExercise
 }: RoutineExerciseManagerProps) {
-  const availableExercises = exercises.filter(
-    (exercise) =>
-      !routine.exercises?.some(
-        (routineExercise) =>
-          routineExercise.id === exercise.id
-      )
-  );
+  const routineExercises =
+    routine.exercises ?? [];
+
+  const routineExerciseIds =
+    routineExercises.map(
+      (exercise) => exercise.id
+    );
 
   return (
-    <section className="routine-manager">
+    <section className="routine-exercise-manager">
       <div className="routine-manager-header">
         <div>
-          <span className="routine-card-label">
+          <span className="section-eyebrow">
             Gestionar rutina
           </span>
 
-          <h3>{routine.name}</h3>
-
-          <p>
-            Añade o elimina ejercicios de esta rutina.
-          </p>
+          <h2>
+            {routine.name}
+          </h2>
         </div>
-
-        <span className="routine-count-badge">
-          {routine.exercises?.length ?? 0} ejercicios
-        </span>
       </div>
 
-      <div className="routine-manager-section">
-        <h4>En la rutina</h4>
+      <ExercisePicker
+        exercises={exercises}
+        excludedExerciseIds={
+          routineExerciseIds
+        }
+        onSelectExercise={
+          onAddExercise
+        }
+        buttonText="Añadir a la rutina"
+      />
 
-        {routine.exercises &&
-        routine.exercises.length > 0 ? (
-          <div className="routine-manager-list">
-            {routine.exercises.map((exercise) => (
-              <div
-                className="routine-manager-item"
-                key={exercise.id}
-              >
-                <div>
-                  <strong>{exercise.name}</strong>
+      <div className="routine-current-exercises">
+        <h3>
+          Ejercicios de la rutina
+        </h3>
 
-                  <p>{exercise.muscleGroup}</p>
-                </div>
-
-                <button
-                  type="button"
-                  className="danger-button"
-                  onClick={() =>
-                    onRemoveExercise(exercise.id)
-                  }
-                >
-                  Quitar
-                </button>
-              </div>
-            ))}
-          </div>
-        ) : (
+        {routineExercises.length === 0 ? (
           <div className="empty-state">
             <p>
-              Esta rutina todavía no tiene ejercicios.
-            </p>
-          </div>
-        )}
-      </div>
-
-      <div className="routine-manager-section">
-        <h4>Añadir ejercicios</h4>
-
-        {availableExercises.length === 0 ? (
-          <div className="empty-state">
-            <p>
-              No hay más ejercicios disponibles para añadir.
+              Esta rutina todavía no
+              tiene ejercicios.
             </p>
           </div>
         ) : (
-          <div className="routine-manager-list">
-            {availableExercises.map((exercise) => (
-              <div
-                className="routine-manager-item"
-                key={exercise.id}
-              >
-                <div>
-                  <strong>{exercise.name}</strong>
-
-                  <p>{exercise.muscleGroup}</p>
-                </div>
-
-                <button
-                  type="button"
-                  className="primary-button"
-                  onClick={() =>
-                    onAddExercise(exercise.id)
-                  }
+          <div className="routine-exercise-list">
+            {routineExercises.map(
+              (exercise) => (
+                <div
+                  className="routine-exercise-item"
+                  key={exercise.id}
                 >
-                  Añadir
-                </button>
-              </div>
-            ))}
+                  <div>
+                    <strong>
+                      {exercise.name}
+                    </strong>
+
+                    <span>
+                      {
+                        exercise.muscleGroup
+                      }
+                    </span>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="danger-button"
+                    onClick={() =>
+                      onRemoveExercise(
+                        exercise.id
+                      )
+                    }
+                  >
+                    Quitar
+                  </button>
+                </div>
+              )
+            )}
           </div>
         )}
       </div>
