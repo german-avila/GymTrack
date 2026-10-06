@@ -1,8 +1,15 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState
+} from "react";
 
-import type { Exercise } from "../types/Exercise";
+import type {
+  Exercise
+} from "../types/Exercise";
 
-import { MUSCLE_GROUPS } from "../constants/muscleGroups";
+import {
+  MUSCLE_GROUPS
+} from "../constants/muscleGroups";
 
 import {
   createExercise,
@@ -23,14 +30,20 @@ function ExerciseForm({
   const [name, setName] =
     useState("");
 
-  const [muscleGroup, setMuscleGroup] =
-    useState("");
+  const [
+    muscleGroup,
+    setMuscleGroup
+  ] = useState("");
 
-  const [description, setDescription] =
-    useState("");
+  const [
+    description,
+    setDescription
+  ] = useState("");
 
-  const [isSubmitting, setIsSubmitting] =
-    useState(false);
+  const [
+    isSubmitting,
+    setIsSubmitting
+  ] = useState(false);
 
   const [error, setError] =
     useState<string | null>(null);
@@ -46,13 +59,16 @@ function ExerciseForm({
       );
 
       setDescription(
-        editingExercise.description ?? ""
+        editingExercise.description ??
+          ""
       );
     } else {
       setName("");
       setMuscleGroup("");
       setDescription("");
     }
+
+    setError(null);
   }, [editingExercise]);
 
   async function handleSubmit(
@@ -90,10 +106,6 @@ function ExerciseForm({
         );
       }
 
-      setName("");
-      setMuscleGroup("");
-      setDescription("");
-
       onExerciseCreated();
     } catch (error) {
       console.error(error);
@@ -108,15 +120,9 @@ function ExerciseForm({
 
   return (
     <form
-      className="exercise-form"
+      className="modal-form"
       onSubmit={handleSubmit}
     >
-      <h2>
-        {editingExercise
-          ? "Editar ejercicio"
-          : "Añadir ejercicio"}
-      </h2>
-
       <div className="form-group">
         <label htmlFor="name">
           Nombre
@@ -132,6 +138,7 @@ function ExerciseForm({
             )
           }
           placeholder="Ej. Press banca"
+          autoFocus
         />
       </div>
 
@@ -180,34 +187,38 @@ function ExerciseForm({
             )
           }
           placeholder="Descripción opcional del ejercicio"
+          rows={4}
         />
       </div>
 
       {error && (
-        <p>{error}</p>
+        <p className="form-error">
+          {error}
+        </p>
       )}
 
-      <button
-        className="primary-button"
-        type="submit"
-        disabled={isSubmitting}
-      >
-        {isSubmitting
-          ? "Guardando..."
-          : editingExercise
-            ? "Guardar cambios"
-            : "Guardar"}
-      </button>
-
-      {editingExercise && (
+      <div className="modal-form-actions">
         <button
           className="secondary-button"
           type="button"
           onClick={onCancelEdit}
+          disabled={isSubmitting}
         >
           Cancelar
         </button>
-      )}
+
+        <button
+          className="primary-button"
+          type="submit"
+          disabled={isSubmitting}
+        >
+          {isSubmitting
+            ? "Guardando..."
+            : editingExercise
+              ? "Guardar cambios"
+              : "Crear ejercicio"}
+        </button>
+      </div>
     </form>
   );
 }

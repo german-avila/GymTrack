@@ -7,24 +7,34 @@ import {
   useNavigate
 } from "react-router-dom";
 
-import AlertMessage from "../components/AlertMessage";
-import RoutineForm from "../components/RoutineForm";
-import RoutineList from "../components/RoutineList";
-import RoutineExerciseManager from "../components/RoutineExerciseManager";
+import AlertMessage
+  from "../components/AlertMessage";
 
-import type { Exercise } from "../types/Exercise";
-import type { Routine } from "../types/Routine";
+import FormModal
+  from "../components/FormModal";
+
+import RoutineForm
+  from "../components/RoutineForm";
+
+import RoutineList
+  from "../components/RoutineList";
+
+import type {
+  Exercise
+} from "../types/Exercise";
+
+import type {
+  Routine
+} from "../types/Routine";
 
 import {
   getExercises
 } from "../services/exerciseService";
 
 import {
-  addExerciseToRoutine,
   deleteRoutine as deleteRoutineRequest,
   getRoutineById,
-  getRoutines,
-  removeExerciseFromRoutine
+  getRoutines
 } from "../services/routineService";
 
 import {
@@ -47,9 +57,9 @@ function RoutinesPage() {
   ] = useState<Routine | null>(null);
 
   const [
-    selectedRoutine,
-    setSelectedRoutine
-  ] = useState<Routine | null>(null);
+    isFormOpen,
+    setIsFormOpen
+  ] = useState(false);
 
   const [error, setError] =
     useState("");
@@ -92,25 +102,70 @@ function RoutinesPage() {
     loadExercises();
   }, []);
 
-  function startEditingRoutine(
-    routine: Routine
-  ) {
-    setEditingRoutine(routine);
+  function startCreatingRoutine() {
+    setEditingRoutine(null);
+    setIsFormOpen(true);
+
+    setError("");
+    setSuccess("");
   }
 
-  function cancelEditingRoutine() {
+  async function startEditingRoutine(
+    routine: Routine
+  ) {
+    try {
+      const fullRoutine =
+        await getRoutineById(
+          routine.id
+        );
+
+      setEditingRoutine(
+        fullRoutine
+      );
+
+      setIsFormOpen(true);
+
+      setError("");
+      setSuccess("");
+    } catch (error) {
+      console.error(error);
+
+      setError(
+        "No se pudo cargar la rutina."
+      );
+    }
+  }
+
+  function closeRoutineForm() {
     setEditingRoutine(null);
+    setIsFormOpen(false);
   }
 
   async function handleRoutineSaved() {
-    setEditingRoutine(null);
+    const wasEditing =
+      editingRoutine !== null;
 
-    setError("");
-    setSuccess(
-      "Rutina guardada correctamente."
-    );
+    closeRoutineForm();
 
-    await loadRoutines();
+    try {
+      await loadRoutines();
+
+      setError("");
+
+      setSuccess(
+        wasEditing
+          ? "Rutina actualizada correctamente."
+          : "Rutina creada correctamente."
+      );
+    } catch (error) {
+      console.error(error);
+
+      setSuccess("");
+
+      setError(
+        "La rutina se guardó, pero no se pudo actualizar la lista."
+      );
+    }
   }
 
   async function deleteRoutine(
@@ -121,129 +176,20 @@ function RoutinesPage() {
         id
       );
 
-      if (
-        selectedRoutine?.id === id
-      ) {
-        setSelectedRoutine(null);
-      }
-
-      if (
-        editingRoutine?.id === id
-      ) {
-        setEditingRoutine(null);
-      }
+      await loadRoutines();
 
       setError("");
+
       setSuccess(
         "Rutina eliminada correctamente."
       );
-
-      await loadRoutines();
     } catch (error) {
       console.error(error);
 
       setSuccess("");
+
       setError(
         "No se pudo eliminar la rutina."
-      );
-    }
-  }
-
-  async function manageRoutineExercises(
-    routine: Routine
-  ) {
-    try {
-      const fullRoutine =
-        await getRoutineById(
-          routine.id
-        );
-
-      setSelectedRoutine(
-        fullRoutine
-      );
-
-      setError("");
-    } catch (error) {
-      console.error(error);
-
-      setError(
-        "No se pudo cargar la rutina."
-      );
-    }
-  }
-
-  async function addExerciseToSelectedRoutine(
-    exerciseId: number
-  ) {
-    if (!selectedRoutine) {
-      return;
-    }
-
-    try {
-      await addExerciseToRoutine(
-        selectedRoutine.id,
-        exerciseId
-      );
-
-      const updatedRoutine =
-        await getRoutineById(
-          selectedRoutine.id
-        );
-
-      setSelectedRoutine(
-        updatedRoutine
-      );
-
-      setError("");
-      setSuccess(
-        "Ejercicio añadido a la rutina."
-      );
-
-      await loadRoutines();
-    } catch (error) {
-      console.error(error);
-
-      setSuccess("");
-      setError(
-        "No se pudo añadir el ejercicio a la rutina."
-      );
-    }
-  }
-
-  async function removeExerciseFromSelectedRoutine(
-    exerciseId: number
-  ) {
-    if (!selectedRoutine) {
-      return;
-    }
-
-    try {
-      await removeExerciseFromRoutine(
-        selectedRoutine.id,
-        exerciseId
-      );
-
-      const updatedRoutine =
-        await getRoutineById(
-          selectedRoutine.id
-        );
-
-      setSelectedRoutine(
-        updatedRoutine
-      );
-
-      setError("");
-      setSuccess(
-        "Ejercicio eliminado de la rutina."
-      );
-
-      await loadRoutines();
-    } catch (error) {
-      console.error(error);
-
-      setSuccess("");
-      setError(
-        "No se pudo quitar el ejercicio de la rutina."
       );
     }
   }
@@ -264,6 +210,7 @@ function RoutinesPage() {
       console.error(error);
 
       setSuccess("");
+
       setError(
         "No se pudo iniciar el entrenamiento."
       );
@@ -272,22 +219,45 @@ function RoutinesPage() {
 
   return (
     <main className="page-content">
-      <div className="page-header">
+      <header className="page-header">
         <div>
-          <span className="section-eyebrow">
-            Rutinas
+          <span className="page-kicker">
+            Planificación
           </span>
 
           <h1>
-            Mis rutinas
+            Rutinas
           </h1>
 
           <p>
-            Crea plantillas de entrenamiento
-            y organiza sus ejercicios.
+            Construye tus entrenamientos
+            habituales y empieza una sesión
+            directamente desde aquí.
           </p>
         </div>
-      </div>
+
+        <div className="page-header-actions">
+          <div className="page-counter">
+            <strong>
+              {routines.length}
+            </strong>
+
+            <span>
+              creadas
+            </span>
+          </div>
+
+          <button
+            type="button"
+            className="primary-button"
+            onClick={
+              startCreatingRoutine
+            }
+          >
+            + Nueva rutina
+          </button>
+        </div>
+      </header>
 
       {error && (
         <AlertMessage
@@ -303,49 +273,63 @@ function RoutinesPage() {
         />
       )}
 
-      <RoutineForm
-        editingRoutine={
-          editingRoutine
-        }
-        onRoutineSaved={
-          handleRoutineSaved
-        }
-        onCancelEdit={
-          cancelEditingRoutine
-        }
-      />
+      <section className="content-section">
+        <div className="section-heading">
+          <div>
+            <span>
+              Entrenamiento
+            </span>
 
-      <RoutineList
-        routines={routines}
-        onDeleteRoutine={
-          deleteRoutine
-        }
-        onEditRoutine={
-          startEditingRoutine
-        }
-        onManageExercises={
-          manageRoutineExercises
-        }
-        onStartWorkout={
-          handleStartWorkout
-        }
-      />
+            <h2>
+              Tus rutinas
+            </h2>
+          </div>
+        </div>
 
-      {selectedRoutine && (
-        <RoutineExerciseManager
-          routine={
-            selectedRoutine
+        <RoutineList
+          routines={routines}
+          onDeleteRoutine={
+            deleteRoutine
           }
-          exercises={
-            exercises
+          onEditRoutine={
+            startEditingRoutine
           }
-          onAddExercise={
-            addExerciseToSelectedRoutine
-          }
-          onRemoveExercise={
-            removeExerciseFromSelectedRoutine
+          onStartWorkout={
+            handleStartWorkout
           }
         />
+      </section>
+
+      {isFormOpen && (
+        <FormModal
+          wide
+          eyebrow={
+            editingRoutine
+              ? "Editar rutina"
+              : "Nueva rutina"
+          }
+          title={
+            editingRoutine
+              ? editingRoutine.name
+              : "Crear rutina"
+          }
+          onClose={
+            closeRoutineForm
+          }
+        >
+          <RoutineForm
+            exercises={exercises}
+            editingRoutine={
+              editingRoutine
+            }
+            onRoutineSaved={
+              handleRoutineSaved
+            }
+            onCancelEdit={
+              closeRoutineForm
+            }
+          />
+        </FormModal>
       )}
     </main>
   );

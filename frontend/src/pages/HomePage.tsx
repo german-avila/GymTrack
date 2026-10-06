@@ -1,18 +1,36 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState
+} from "react";
 
 import type { Exercise } from "../types/Exercise";
 import type { Routine } from "../types/Routine";
 import type { Workout } from "../types/Workout";
 
-import { getExercises } from "../services/exerciseService";
-import { getRoutines } from "../services/routineService";
-import { getWorkouts } from "../services/workoutService";
+import {
+  getExercises
+} from "../services/exerciseService";
+
+import {
+  getRoutines
+} from "../services/routineService";
+
+import {
+  getWorkouts
+} from "../services/workoutService";
 
 function HomePage() {
-  const [exercises, setExercises] = useState<Exercise[]>([]);
-  const [routines, setRoutines] = useState<Routine[]>([]);
-  const [workouts, setWorkouts] = useState<Workout[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [exercises, setExercises] =
+    useState<Exercise[]>([]);
+
+  const [routines, setRoutines] =
+    useState<Routine[]>([]);
+
+  const [workouts, setWorkouts] =
+    useState<Workout[]>([]);
+
+  const [error, setError] =
+    useState<string | null>(null);
 
   async function loadDashboardData() {
     try {
@@ -29,10 +47,14 @@ function HomePage() {
       setExercises(exercisesData);
       setRoutines(routinesData);
       setWorkouts(workoutsData);
+
       setError(null);
     } catch (error) {
       console.error(error);
-      setError("No se pudo cargar el resumen.");
+
+      setError(
+        "No se pudo cargar el resumen."
+      );
     }
   }
 
@@ -41,113 +63,156 @@ function HomePage() {
   }, []);
 
   const latestWorkout =
-    workouts.length > 0 ? workouts[0] : null;
+    workouts.length > 0
+      ? workouts[0]
+      : null;
 
   return (
-    <section>
-      <div className="dashboard-header">
+    <main className="page-content">
+      <header className="page-hero">
         <div>
-          <span className="workout-date-label">
-            Resumen
+          <span className="page-kicker">
+            GymTrack
           </span>
 
-          <h2>Inicio</h2>
+          <h1>
+            Tu entrenamiento,
+            <br />
+            en números.
+          </h1>
 
           <p>
-            Una vista rápida de tu actividad en GymTrack.
+            Registra sesiones, organiza tus
+            rutinas y comprueba cómo progresas.
           </p>
         </div>
-      </div>
 
-      {error && <p>{error}</p>}
+        <div className="hero-mark">
+          GT
+        </div>
+      </header>
 
-      <div className="dashboard-stats">
-        <article className="stat-card">
-          <span className="stat-label">
-            Ejercicios
-          </span>
+      {error && (
+        <p className="page-error">
+          {error}
+        </p>
+      )}
 
-          <strong className="stat-value">
+      <section className="home-metrics">
+        <div className="home-metric">
+          <strong>
             {exercises.length}
           </strong>
 
-          <p>Ejercicios disponibles</p>
-        </article>
-
-        <article className="stat-card">
-          <span className="stat-label">
-            Rutinas
+          <span>
+            ejercicios
           </span>
+        </div>
 
-          <strong className="stat-value">
+        <div className="home-metric">
+          <strong>
             {routines.length}
           </strong>
 
-          <p>Rutinas creadas</p>
-        </article>
-
-        <article className="stat-card">
-          <span className="stat-label">
-            Entrenamientos
+          <span>
+            rutinas
           </span>
+        </div>
 
-          <strong className="stat-value">
+        <div className="home-metric">
+          <strong>
             {workouts.length}
           </strong>
 
-          <p>Sesiones registradas</p>
-        </article>
-      </div>
+          <span>
+            sesiones
+          </span>
+        </div>
+      </section>
 
-      <div className="dashboard-section">
-        <h3>Último entrenamiento</h3>
+      <section className="content-section">
+        <div className="section-heading">
+          <div>
+            <span>
+              Actividad reciente
+            </span>
+
+            <h2>
+              Último entrenamiento
+            </h2>
+          </div>
+        </div>
 
         {latestWorkout ? (
-          <article className="latest-workout-card">
-            <div>
-              <span className="workout-date-label">
-                Última sesión
-              </span>
-
-              <h3>
+          <article className="latest-session">
+            <div className="latest-session-date">
+              <strong>
                 {new Date(
                   latestWorkout.performedAt
-                ).toLocaleDateString("es-ES")}
+                ).toLocaleDateString(
+                  "es-ES",
+                  {
+                    day: "2-digit"
+                  }
+                )}
+              </strong>
+
+              <span>
+                {new Date(
+                  latestWorkout.performedAt
+                ).toLocaleDateString(
+                  "es-ES",
+                  {
+                    month: "short"
+                  }
+                )}
+              </span>
+            </div>
+
+            <div className="latest-session-main">
+              <h3>
+                {latestWorkout.routineId ===
+                null
+                  ? "Entrenamiento libre"
+                  : `Rutina ${latestWorkout.routineId}`}
               </h3>
 
               <p>
                 {new Date(
                   latestWorkout.performedAt
-                ).toLocaleTimeString("es-ES", {
-                  hour: "2-digit",
-                  minute: "2-digit"
-                })}
+                ).toLocaleTimeString(
+                  "es-ES",
+                  {
+                    hour: "2-digit",
+                    minute: "2-digit"
+                  }
+                )}
               </p>
             </div>
 
-            <div>
-              <span className="workout-badge">
-                {latestWorkout.routineId === null
-                  ? "Entrenamiento libre"
-                  : `Rutina ${latestWorkout.routineId}`}
-              </span>
-
-              {latestWorkout.notes && (
-                <p className="latest-workout-notes">
-                  {latestWorkout.notes}
-                </p>
-              )}
+            <div className="latest-session-status">
+              {latestWorkout.status ===
+              "active"
+                ? "En curso"
+                : "Completado"}
             </div>
+
+            {latestWorkout.notes && (
+              <p className="latest-session-notes">
+                {latestWorkout.notes}
+              </p>
+            )}
           </article>
         ) : (
           <div className="empty-state">
             <p>
-              Todavía no hay entrenamientos registrados.
+              Todavía no hay entrenamientos
+              registrados.
             </p>
           </div>
         )}
-      </div>
-    </section>
+      </section>
+    </main>
   );
 }
 

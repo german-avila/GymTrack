@@ -1,10 +1,23 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState
+} from "react";
 
-import AlertMessage from "../components/AlertMessage";
-import ExerciseForm from "../components/ExerciseForm";
-import ExerciseList from "../components/ExerciseList";
+import AlertMessage
+  from "../components/AlertMessage";
 
-import type { Exercise } from "../types/Exercise";
+import ExerciseForm
+  from "../components/ExerciseForm";
+
+import ExerciseList
+  from "../components/ExerciseList";
+
+import FormModal
+  from "../components/FormModal";
+
+import type {
+  Exercise
+} from "../types/Exercise";
 
 import {
   deleteExercise as deleteExerciseRequest,
@@ -15,8 +28,15 @@ function ExercisesPage() {
   const [exercises, setExercises] =
     useState<Exercise[]>([]);
 
-  const [editingExercise, setEditingExercise] =
-    useState<Exercise | null>(null);
+  const [
+    editingExercise,
+    setEditingExercise
+  ] = useState<Exercise | null>(null);
+
+  const [
+    isFormOpen,
+    setIsFormOpen
+  ] = useState(false);
 
   const [error, setError] =
     useState<string | null>(null);
@@ -26,7 +46,8 @@ function ExercisesPage() {
 
   async function loadExercises() {
     try {
-      const data = await getExercises();
+      const data =
+        await getExercises();
 
       setExercises(data);
     } catch (error) {
@@ -44,17 +65,27 @@ function ExercisesPage() {
     loadExercises();
   }, []);
 
-  function startEditingExercise(
-    exercise: Exercise
-  ) {
-    setEditingExercise(exercise);
+  function startCreatingExercise() {
+    setEditingExercise(null);
+    setIsFormOpen(true);
 
     setError(null);
     setSuccess(null);
   }
 
-  function cancelEditingExercise() {
+  function startEditingExercise(
+    exercise: Exercise
+  ) {
+    setEditingExercise(exercise);
+    setIsFormOpen(true);
+
+    setError(null);
+    setSuccess(null);
+  }
+
+  function closeExerciseForm() {
     setEditingExercise(null);
+    setIsFormOpen(false);
   }
 
   async function handleExerciseSaved() {
@@ -62,7 +93,7 @@ function ExercisesPage() {
       const wasEditing =
         editingExercise !== null;
 
-      setEditingExercise(null);
+      closeExerciseForm();
 
       await loadExercises();
 
@@ -96,7 +127,7 @@ function ExercisesPage() {
         editingExercise?.id ===
         exerciseId
       ) {
-        setEditingExercise(null);
+        closeExerciseForm();
       }
 
       await loadExercises();
@@ -118,22 +149,45 @@ function ExercisesPage() {
   }
 
   return (
-    <section>
-      <div className="dashboard-header">
+    <main className="page-content">
+      <header className="page-header">
         <div>
-          <span className="workout-date-label">
+          <span className="page-kicker">
             Biblioteca
           </span>
 
-          <h2>Ejercicios</h2>
+          <h1>
+            Ejercicios
+          </h1>
 
           <p>
-            Crea y organiza los ejercicios
-            disponibles para tus rutinas y
-            entrenamientos.
+            Tu catálogo de movimientos para
+            crear rutinas y registrar sesiones.
           </p>
         </div>
-      </div>
+
+        <div className="page-header-actions">
+          <div className="page-counter">
+            <strong>
+              {exercises.length}
+            </strong>
+
+            <span>
+              disponibles
+            </span>
+          </div>
+
+          <button
+            type="button"
+            className="primary-button"
+            onClick={
+              startCreatingExercise
+            }
+          >
+            + Nuevo ejercicio
+          </button>
+        </div>
+      </header>
 
       {error && (
         <AlertMessage
@@ -149,22 +203,18 @@ function ExercisesPage() {
         />
       )}
 
-      <div className="dashboard-section">
-        <ExerciseForm
-          editingExercise={
-            editingExercise
-          }
-          onExerciseCreated={
-            handleExerciseSaved
-          }
-          onCancelEdit={
-            cancelEditingExercise
-          }
-        />
-      </div>
+      <section className="content-section">
+        <div className="section-heading">
+          <div>
+            <span>
+              Catálogo
+            </span>
 
-      <div className="dashboard-section">
-        <h3>Mis ejercicios</h3>
+            <h2>
+              Todos los ejercicios
+            </h2>
+          </div>
+        </div>
 
         <ExerciseList
           exercises={exercises}
@@ -175,8 +225,38 @@ function ExercisesPage() {
             deleteExercise
           }
         />
-      </div>
-    </section>
+      </section>
+
+      {isFormOpen && (
+        <FormModal
+          eyebrow={
+            editingExercise
+              ? "Edición"
+              : "Nuevo ejercicio"
+          }
+          title={
+            editingExercise
+              ? "Editar ejercicio"
+              : "Crear ejercicio"
+          }
+          onClose={
+            closeExerciseForm
+          }
+        >
+          <ExerciseForm
+            editingExercise={
+              editingExercise
+            }
+            onExerciseCreated={
+              handleExerciseSaved
+            }
+            onCancelEdit={
+              closeExerciseForm
+            }
+          />
+        </FormModal>
+      )}
+    </main>
   );
 }
 

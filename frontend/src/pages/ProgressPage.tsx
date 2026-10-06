@@ -1,4 +1,7 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState
+} from "react";
 
 import {
   CartesianGrid,
@@ -10,13 +13,24 @@ import {
   YAxis
 } from "recharts";
 
-import AlertMessage from "../components/AlertMessage";
+import AlertMessage
+  from "../components/AlertMessage";
 
-import type { Exercise } from "../types/Exercise";
-import type { ExerciseProgress } from "../types/Progress";
+import type {
+  Exercise
+} from "../types/Exercise";
 
-import { getExercises } from "../services/exerciseService";
-import { getExerciseProgress } from "../services/progressService";
+import type {
+  ExerciseProgress
+} from "../types/Progress";
+
+import {
+  getExercises
+} from "../services/exerciseService";
+
+import {
+  getExerciseProgress
+} from "../services/progressService";
 
 function ProgressPage() {
   const [exercises, setExercises] =
@@ -25,17 +39,25 @@ function ProgressPage() {
   const [
     selectedExerciseId,
     setSelectedExerciseId
-  ] = useState<string>("");
+  ] = useState("");
 
-  const [progress, setProgress] =
-    useState<ExerciseProgress | null>(null);
+  const [search, setSearch] =
+    useState("");
+
+  const [
+    progress,
+    setProgress
+  ] = useState<ExerciseProgress | null>(
+    null
+  );
 
   const [error, setError] =
     useState<string | null>(null);
 
   async function loadExercises() {
     try {
-      const data = await getExercises();
+      const data =
+        await getExercises();
 
       setExercises(data);
       setError(null);
@@ -75,7 +97,9 @@ function ProgressPage() {
   }, []);
 
   function handleExerciseChange(
-    event: React.ChangeEvent<HTMLSelectElement>
+    event: React.ChangeEvent<
+      HTMLSelectElement
+    >
   ) {
     const value =
       event.target.value;
@@ -94,6 +118,39 @@ function ProgressPage() {
     );
   }
 
+  const filteredExercises =
+    exercises.filter((exercise) => {
+      const normalizedSearch =
+        search
+          .trim()
+          .toLocaleLowerCase(
+            "es-ES"
+          );
+
+      if (
+        normalizedSearch === ""
+      ) {
+        return true;
+      }
+
+      return (
+        exercise.name
+          .toLocaleLowerCase(
+            "es-ES"
+          )
+          .includes(
+            normalizedSearch
+          ) ||
+        exercise.muscleGroup
+          .toLocaleLowerCase(
+            "es-ES"
+          )
+          .includes(
+            normalizedSearch
+          )
+      );
+    });
+
   let chartData: {
     date: string;
     weight: number;
@@ -110,9 +167,12 @@ function ProgressPage() {
       >();
 
     for (
-      const item of progress.history
+      const item of
+      progress.history
     ) {
-      if (item.weight === null) {
+      if (
+        item.weight === null
+      ) {
         continue;
       }
 
@@ -126,7 +186,8 @@ function ProgressPage() {
 
       if (
         !currentBest ||
-        weight > currentBest.weight
+        weight >
+          currentBest.weight
       ) {
         bestWeightByWorkout.set(
           item.workoutId,
@@ -139,44 +200,47 @@ function ProgressPage() {
       }
     }
 
-    chartData = Array.from(
-      bestWeightByWorkout.values()
-    )
-      .sort(
-        (a, b) =>
-          new Date(
-            a.performedAt
-          ).getTime() -
-          new Date(
-            b.performedAt
-          ).getTime()
+    chartData =
+      Array.from(
+        bestWeightByWorkout.values()
       )
-      .map((item) => ({
-        date: new Date(
-          item.performedAt
-        ).toLocaleDateString(
-          "es-ES"
-        ),
-        weight: item.weight
-      }));
+        .sort(
+          (a, b) =>
+            new Date(
+              a.performedAt
+            ).getTime() -
+            new Date(
+              b.performedAt
+            ).getTime()
+        )
+        .map((item) => ({
+          date: new Date(
+            item.performedAt
+          ).toLocaleDateString(
+            "es-ES"
+          ),
+          weight: item.weight
+        }));
   }
 
   return (
-    <section>
-      <div className="dashboard-header">
+    <main className="page-content">
+      <header className="page-header">
         <div>
-          <span className="workout-date-label">
+          <span className="page-kicker">
             Estadísticas
           </span>
 
-          <h2>Progreso</h2>
+          <h1>
+            Progreso
+          </h1>
 
           <p>
             Consulta tu evolución y tus
             mejores marcas por ejercicio.
           </p>
         </div>
-      </div>
+      </header>
 
       {error && (
         <AlertMessage
@@ -185,39 +249,78 @@ function ProgressPage() {
         />
       )}
 
-      <div className="exercise-form">
-        <div className="form-group">
-          <label htmlFor="progress-exercise">
-            Ejercicio
-          </label>
+      <section className="content-section">
+        <div className="section-heading">
+          <div>
+            <span>
+              Ejercicio
+            </span>
 
-          <select
-            id="progress-exercise"
-            value={selectedExerciseId}
-            onChange={
-              handleExerciseChange
-            }
-          >
-            <option value="">
-              Selecciona un ejercicio
-            </option>
-
-            {exercises.map(
-              (exercise) => (
-                <option
-                  key={exercise.id}
-                  value={exercise.id}
-                >
-                  {exercise.name}
-                </option>
-              )
-            )}
-          </select>
+            <h2>
+              Consulta tu progreso
+            </h2>
+          </div>
         </div>
-      </div>
+
+        <div className="progress-exercise-selector">
+          <div className="form-group">
+            <label htmlFor="progress-search">
+              Buscar ejercicio
+            </label>
+
+            <input
+              id="progress-search"
+              type="search"
+              value={search}
+              onChange={(event) =>
+                setSearch(
+                  event.target.value
+                )
+              }
+              placeholder="Ej. Press banca"
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="progress-exercise">
+              Ejercicio
+            </label>
+
+            <select
+              id="progress-exercise"
+              value={
+                selectedExerciseId
+              }
+              onChange={
+                handleExerciseChange
+              }
+            >
+              <option value="">
+                Selecciona un ejercicio
+              </option>
+
+              {filteredExercises.map(
+                (exercise) => (
+                  <option
+                    key={
+                      exercise.id
+                    }
+                    value={
+                      exercise.id
+                    }
+                  >
+                    {exercise.name}
+                  </option>
+                )
+              )}
+            </select>
+          </div>
+        </div>
+      </section>
 
       {!progress &&
-        selectedExerciseId === "" && (
+        selectedExerciseId ===
+          "" && (
           <div className="empty-state">
             <p>
               Selecciona un ejercicio para
@@ -242,7 +345,8 @@ function ProgressPage() {
               </strong>
 
               <p>
-                Sesiones con este ejercicio
+                Sesiones con este
+                ejercicio
               </p>
             </article>
 
@@ -258,7 +362,9 @@ function ProgressPage() {
                 }
               </strong>
 
-              <p>Series registradas</p>
+              <p>
+                Series registradas
+              </p>
             </article>
 
             <article className="stat-card">
@@ -271,7 +377,9 @@ function ProgressPage() {
                   .bestWeight ?? "-"}
               </strong>
 
-              <p>kg</p>
+              <p>
+                kg
+              </p>
             </article>
 
             <article className="stat-card">
@@ -284,14 +392,27 @@ function ProgressPage() {
                   .bestReps ?? "-"}
               </strong>
 
-              <p>repeticiones</p>
+              <p>
+                repeticiones
+              </p>
             </article>
           </div>
 
-          <div className="dashboard-section">
-            <h3>Evolución del peso</h3>
+          <section className="content-section">
+            <div className="section-heading">
+              <div>
+                <span>
+                  Evolución
+                </span>
 
-            {chartData.length > 0 ? (
+                <h2>
+                  Peso máximo
+                </h2>
+              </div>
+            </div>
+
+            {chartData.length >
+            0 ? (
               <div className="progress-chart">
                 <ResponsiveContainer
                   width="100%"
@@ -352,12 +473,14 @@ function ProgressPage() {
                       strokeWidth={3}
                       dot={{
                         r: 4,
-                        fill: "#d4a72c",
+                        fill:
+                          "#d4a72c",
                         strokeWidth: 0
                       }}
                       activeDot={{
                         r: 7,
-                        fill: "#f0c75e",
+                        fill:
+                          "#f0c75e",
                         stroke:
                           "#d4a72c",
                         strokeWidth: 2
@@ -369,23 +492,35 @@ function ProgressPage() {
             ) : (
               <div className="empty-state">
                 <p>
-                  Todavía no hay datos de
-                  peso suficientes para
-                  mostrar una gráfica.
+                  Todavía no hay datos
+                  de peso suficientes
+                  para mostrar una
+                  gráfica.
                 </p>
               </div>
             )}
-          </div>
+          </section>
 
-          <div className="dashboard-section">
-            <h3>Historial</h3>
+          <section className="content-section">
+            <div className="section-heading">
+              <div>
+                <span>
+                  Registro
+                </span>
+
+                <h2>
+                  Historial
+                </h2>
+              </div>
+            </div>
 
             {progress.history.length ===
             0 ? (
               <div className="empty-state">
                 <p>
-                  No hay series registradas
-                  para este ejercicio.
+                  No hay series
+                  registradas para este
+                  ejercicio.
                 </p>
               </div>
             ) : (
@@ -394,7 +529,9 @@ function ProgressPage() {
                   (item) => (
                     <div
                       className="progress-history-row"
-                      key={item.setId}
+                      key={
+                        item.setId
+                      }
                     >
                       <div>
                         <strong>
@@ -407,7 +544,9 @@ function ProgressPage() {
 
                         <p>
                           Serie{" "}
-                          {item.setNumber}
+                          {
+                            item.setNumber
+                          }
                         </p>
                       </div>
 
@@ -428,10 +567,10 @@ function ProgressPage() {
                 )}
               </div>
             )}
-          </div>
+          </section>
         </>
       )}
-    </section>
+    </main>
   );
 }
 
