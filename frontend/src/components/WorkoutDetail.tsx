@@ -5,6 +5,8 @@ import {
 
 import ConfirmModal from "./ConfirmModal";
 import ExercisePicker from "./ExercisePicker";
+import PreviousExercisePerformance
+  from "./PreviousExercisePerformance";
 
 import type { Exercise } from "../types/Exercise";
 import type {
@@ -146,7 +148,8 @@ function WorkoutDetail({
           workout.startedAt
         ).getTime();
 
-      const now = Date.now();
+      const now =
+        Date.now();
 
       const difference =
         Math.max(
@@ -217,6 +220,94 @@ function WorkoutDetail({
     }
 
     return `${formattedMinutes}:${formattedSeconds}`;
+  }
+
+  function getWorkoutDurationSeconds() {
+    if (isActive) {
+      return elapsedSeconds;
+    }
+
+    if (
+      !workout.startedAt ||
+      !workout.endedAt
+    ) {
+      return null;
+    }
+
+    const startedAt =
+      new Date(
+        workout.startedAt
+      ).getTime();
+
+    const endedAt =
+      new Date(
+        workout.endedAt
+      ).getTime();
+
+    return Math.max(
+      0,
+      Math.floor(
+        (endedAt - startedAt) /
+          1000
+      )
+    );
+  }
+
+  function calculateExerciseVolume(
+    workoutExercise: WorkoutExercise
+  ) {
+    return workoutExercise.sets.reduce(
+      (total, set) => {
+        if (set.weight === null) {
+          return total;
+        }
+
+        const weight =
+          Number(set.weight);
+
+        if (Number.isNaN(weight)) {
+          return total;
+        }
+
+        return (
+          total +
+          weight * set.reps
+        );
+      },
+      0
+    );
+  }
+
+  const totalVolume =
+    workoutExercises.reduce(
+      (total, workoutExercise) =>
+        total +
+        calculateExerciseVolume(
+          workoutExercise
+        ),
+      0
+    );
+
+  const totalSets =
+    workoutExercises.reduce(
+      (total, workoutExercise) =>
+        total +
+        workoutExercise.sets.length,
+      0
+    );
+
+  const workoutDuration =
+    getWorkoutDurationSeconds();
+
+  function formatVolume(
+    volume: number
+  ) {
+    return new Intl.NumberFormat(
+      "es-ES",
+      {
+        maximumFractionDigits: 1
+      }
+    ).format(volume);
   }
 
   function getNewSetForm(
@@ -398,18 +489,6 @@ function WorkoutDetail({
                 En curso
               </span>
 
-              <div className="live-workout-timer">
-                <span>
-                  Duración
-                </span>
-
-                <strong>
-                  {formatDuration(
-                    elapsedSeconds
-                  )}
-                </strong>
-              </div>
-
               <button
                 type="button"
                 className="primary-button"
@@ -427,6 +506,57 @@ function WorkoutDetail({
               Completado
             </span>
           )}
+        </div>
+      </div>
+
+      <div className="workout-summary">
+        <div className="workout-summary-card">
+          <span>
+            Duración
+          </span>
+
+          <strong>
+            {workoutDuration !== null
+              ? formatDuration(
+                  workoutDuration
+                )
+              : "—"}
+          </strong>
+        </div>
+
+        <div className="workout-summary-card">
+          <span>
+            Volumen total
+          </span>
+
+          <strong>
+            {formatVolume(
+              totalVolume
+            )}
+            {" kg"}
+          </strong>
+        </div>
+
+        <div className="workout-summary-card">
+          <span>
+            Series
+          </span>
+
+          <strong>
+            {totalSets}
+          </strong>
+        </div>
+
+        <div className="workout-summary-card">
+          <span>
+            Ejercicios
+          </span>
+
+          <strong>
+            {
+              workoutExercises.length
+            }
+          </strong>
         </div>
       </div>
 
@@ -509,6 +639,11 @@ function WorkoutDetail({
                     workoutExercise.id
                   );
 
+                const exerciseVolume =
+                  calculateExerciseVolume(
+                    workoutExercise
+                  );
+
                 return (
                   <article
                     className="workout-exercise-card"
@@ -531,20 +666,46 @@ function WorkoutDetail({
                         </h4>
                       </div>
 
-                      {isActive && (
-                        <button
-                          type="button"
-                          className="danger-button"
-                          onClick={() =>
-                            setExerciseToDelete(
-                              workoutExercise
-                            )
-                          }
-                        >
-                          Quitar ejercicio
-                        </button>
-                      )}
+                      <div className="workout-exercise-header-actions">
+                        <div className="exercise-volume">
+                          <span>
+                            Volumen
+                          </span>
+
+                          <strong>
+                            {formatVolume(
+                              exerciseVolume
+                            )}
+                            {" kg"}
+                          </strong>
+                        </div>
+
+                        {isActive && (
+                          <button
+                            type="button"
+                            className="danger-button"
+                            onClick={() =>
+                              setExerciseToDelete(
+                                workoutExercise
+                              )
+                            }
+                          >
+                            Quitar ejercicio
+                          </button>
+                        )}
+                      </div>
                     </div>
+
+                    {isActive && (
+                      <PreviousExercisePerformance
+                        exerciseId={
+                          workoutExercise.exerciseId
+                        }
+                        currentWorkoutId={
+                          workout.id
+                        }
+                      />
+                    )}
 
                     {workoutExercise.sets
                       .length === 0 ? (
