@@ -2,6 +2,7 @@ import type { Routine } from "../types/Routine";
 
 const API_URL =
   `${import.meta.env.VITE_API_URL}/api/routines`;
+  
 export async function getRoutines(): Promise<Routine[]> {
   const response = await fetch(API_URL);
 

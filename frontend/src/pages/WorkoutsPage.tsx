@@ -8,7 +8,6 @@ import {
 } from "react-router-dom";
 
 import AlertMessage from "../components/AlertMessage";
-import WorkoutForm from "../components/WorkoutForm";
 import WorkoutList from "../components/WorkoutList";
 import WorkoutDetail from "../components/WorkoutDetail";
 
@@ -27,6 +26,8 @@ import {
 import {
   addExerciseToWorkout,
   addSetToWorkoutExercise,
+  completeWorkout,
+  createWorkout,
   deleteWorkout,
   deleteWorkoutSet,
   getWorkoutById,
@@ -36,8 +37,10 @@ import {
 } from "../services/workoutService";
 
 function WorkoutsPage() {
-  const [searchParams] =
-    useSearchParams();
+  const [
+    searchParams,
+    setSearchParams
+  ] = useSearchParams();
 
   const [workouts, setWorkouts] =
     useState<Workout[]>([]);
@@ -51,11 +54,6 @@ function WorkoutsPage() {
   const [
     selectedWorkout,
     setSelectedWorkout
-  ] = useState<Workout | null>(null);
-
-  const [
-    editingWorkout,
-    setEditingWorkout
   ] = useState<Workout | null>(null);
 
   const [error, setError] =
@@ -135,27 +133,34 @@ function WorkoutsPage() {
     }
   }, [searchParams]);
 
-  function startEditingWorkout(
-    workout: Workout
-  ) {
-    setEditingWorkout(
-      workout
-    );
-  }
+  async function handleStartFreeWorkout() {
+    try {
+      const workout =
+        await createWorkout(
+          null,
+          ""
+        );
 
-  function cancelEditingWorkout() {
-    setEditingWorkout(null);
-  }
+      await loadWorkouts();
 
-  async function handleWorkoutSaved() {
-    setEditingWorkout(null);
+      setError("");
+      setSuccess(
+        "Entrenamiento iniciado."
+      );
 
-    setError("");
-    setSuccess(
-      "Entrenamiento guardado correctamente."
-    );
+      setSearchParams({
+        workout:
+          String(workout.id)
+      });
+    } catch (error) {
+      console.error(error);
 
-    await loadWorkouts();
+      setSuccess("");
+
+      setError(
+        "No se pudo iniciar el entrenamiento. Comprueba que no haya otra sesión activa."
+      );
+    }
   }
 
   async function handleDeleteWorkout(
@@ -168,12 +173,6 @@ function WorkoutsPage() {
         selectedWorkout?.id === id
       ) {
         setSelectedWorkout(null);
-      }
-
-      if (
-        editingWorkout?.id === id
-      ) {
-        setEditingWorkout(null);
       }
 
       setError("");
@@ -215,6 +214,8 @@ function WorkoutsPage() {
 
   function closeWorkoutDetail() {
     setSelectedWorkout(null);
+
+    setSearchParams({});
   }
 
   async function refreshSelectedWorkout() {
@@ -382,9 +383,50 @@ function WorkoutsPage() {
     }
   }
 
+  async function handleCompleteWorkout() {
+    if (!selectedWorkout) {
+      return;
+    }
+
+    try {
+      await completeWorkout(
+        selectedWorkout.id
+      );
+
+      const updatedWorkout =
+        await getWorkoutById(
+          selectedWorkout.id
+        );
+
+      setSelectedWorkout(
+        updatedWorkout
+      );
+
+      await loadWorkouts();
+
+      setError("");
+      setSuccess(
+        "Entrenamiento finalizado correctamente."
+      );
+    } catch (error) {
+      console.error(error);
+
+      setSuccess("");
+      setError(
+        "No se pudo finalizar el entrenamiento."
+      );
+    }
+  }
+
+  const activeWorkout =
+    workouts.find(
+      (workout) =>
+        workout.status === "active"
+    );
+
   return (
     <main className="page-content">
-      <div className="page-header">
+      <div className="page-header workouts-page-header">
         <div>
           <span className="section-eyebrow">
             Entrenamientos
@@ -395,10 +437,39 @@ function WorkoutsPage() {
           </h1>
 
           <p>
-            Registra y consulta tus sesiones
-            de entrenamiento.
+            Registra tus sesiones y consulta
+            tu historial de entrenamiento.
           </p>
         </div>
+
+        {!activeWorkout && (
+          <button
+            type="button"
+            className="primary-button"
+            onClick={
+              handleStartFreeWorkout
+            }
+          >
+            + Empezar entrenamiento libre
+          </button>
+        )}
+
+        {activeWorkout && (
+          <button
+            type="button"
+            className="primary-button"
+            onClick={() =>
+              setSearchParams({
+                workout:
+                  String(
+                    activeWorkout.id
+                  )
+              })
+            }
+          >
+            Continuar entrenamiento
+          </button>
+        )}
       </div>
 
       {error && (
@@ -415,27 +486,11 @@ function WorkoutsPage() {
         />
       )}
 
-      <WorkoutForm
-        routines={routines}
-        editingWorkout={
-          editingWorkout
-        }
-        onWorkoutSaved={
-          handleWorkoutSaved
-        }
-        onCancelEdit={
-          cancelEditingWorkout
-        }
-      />
-
       <WorkoutList
         workouts={workouts}
         routines={routines}
         onViewWorkout={
           viewWorkout
-        }
-        onEditWorkout={
-          startEditingWorkout
         }
         onDeleteWorkout={
           handleDeleteWorkout
@@ -462,7 +517,10 @@ function WorkoutsPage() {
                 </span>
 
                 <h2>
-                  Detalle de la sesión
+                  {selectedWorkout.status ===
+                  "active"
+                    ? "Sesión en curso"
+                    : "Detalle de la sesión"}
                 </h2>
               </div>
 
@@ -503,6 +561,9 @@ function WorkoutsPage() {
                 }
                 onDeleteSet={
                   handleDeleteSet
+                }
+                onCompleteWorkout={
+                  handleCompleteWorkout
                 }
               />
             </div>

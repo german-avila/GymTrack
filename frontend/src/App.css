@@ -1847,3 +1847,102 @@
     padding: 16px;
   }
 }
+
+/* =========================
+   LIVE WORKOUT
+========================= */
+
+.live-workout-status {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+
+  flex-wrap: wrap;
+}
+
+.live-status-badge,
+.completed-status-badge {
+  display: inline-flex;
+  align-items: center;
+
+  padding: 7px 11px;
+
+  border-radius: 999px;
+
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.live-status-badge {
+  background-color: rgb(212 167 44 / 0.12);
+  border: 1px solid rgb(212 167 44 / 0.35);
+
+  color: #f0c75e;
+}
+
+.completed-status-badge {
+  background-color: #252a33;
+  border: 1px solid #3a414d;
+
+  color: #94a3b8;
+}
+
+.live-workout-timer {
+  display: flex;
+  flex-direction: column;
+
+  gap: 2px;
+
+  min-width: 90px;
+}
+
+.live-workout-timer span {
+  color: #64748b;
+
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.live-workout-timer strong {
+  color: #f8fafc;
+
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 700px) {
+  .workout-detail-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .live-workout-status {
+    width: 100%;
+  }
+}
+
+.workouts-page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+
+  gap: 24px;
+}
+
+.workouts-page-header > button {
+  flex-shrink: 0;
+}
+
+@media (max-width: 700px) {
+  .workouts-page-header {
+    flex-direction: column;
+  }
+
+  .workouts-page-header > button {
+    width: 100%;
+  }
+}

@@ -1,4 +1,7 @@
-import { useState } from "react";
+import {
+  useEffect,
+  useState
+} from "react";
 
 import ConfirmModal from "./ConfirmModal";
 import ExercisePicker from "./ExercisePicker";
@@ -40,6 +43,8 @@ type WorkoutDetailProps = {
   onDeleteSet: (
     setId: number
   ) => void;
+
+  onCompleteWorkout: () => void;
 };
 
 type NewSetForm = {
@@ -62,7 +67,8 @@ function WorkoutDetail({
   onRemoveExercise,
   onAddSet,
   onUpdateSet,
-  onDeleteSet
+  onDeleteSet,
+  onCompleteWorkout
 }: WorkoutDetailProps) {
   const [
     newSetForms,
@@ -90,6 +96,16 @@ function WorkoutDetail({
     setSetToDelete
   ] = useState<number | null>(null);
 
+  const [
+    showCompleteConfirmation,
+    setShowCompleteConfirmation
+  ] = useState(false);
+
+  const [
+    elapsedSeconds,
+    setElapsedSeconds
+  ] = useState(0);
+
   const routine = routines.find(
     (routine) =>
       routine.id === workout.routineId
@@ -97,6 +113,9 @@ function WorkoutDetail({
 
   const workoutExercises =
     workout.exercises ?? [];
+
+  const isActive =
+    workout.status === "active";
 
   const performedAt =
     new Date(
@@ -108,6 +127,97 @@ function WorkoutDetail({
         timeStyle: "short"
       }
     );
+
+  useEffect(() => {
+    if (
+      !isActive ||
+      !workout.startedAt
+    ) {
+      return;
+    }
+
+    function updateElapsedTime() {
+      if (!workout.startedAt) {
+        return;
+      }
+
+      const startedAt =
+        new Date(
+          workout.startedAt
+        ).getTime();
+
+      const now = Date.now();
+
+      const difference =
+        Math.max(
+          0,
+          Math.floor(
+            (now - startedAt) /
+              1000
+          )
+        );
+
+      setElapsedSeconds(
+        difference
+      );
+    }
+
+    updateElapsedTime();
+
+    const interval =
+      window.setInterval(
+        updateElapsedTime,
+        1000
+      );
+
+    return () => {
+      window.clearInterval(
+        interval
+      );
+    };
+  }, [
+    isActive,
+    workout.startedAt
+  ]);
+
+  function formatDuration(
+    totalSeconds: number
+  ) {
+    const hours =
+      Math.floor(
+        totalSeconds / 3600
+      );
+
+    const minutes =
+      Math.floor(
+        (totalSeconds % 3600) /
+          60
+      );
+
+    const seconds =
+      totalSeconds % 60;
+
+    const formattedMinutes =
+      String(minutes).padStart(
+        2,
+        "0"
+      );
+
+    const formattedSeconds =
+      String(seconds).padStart(
+        2,
+        "0"
+      );
+
+    if (hours > 0) {
+      return `${String(hours).padStart(
+        2,
+        "0"
+      )}:${formattedMinutes}:${formattedSeconds}`;
+    }
+
+    return `${formattedMinutes}:${formattedSeconds}`;
+  }
 
   function getNewSetForm(
     workoutExerciseId: number
@@ -280,6 +390,44 @@ function WorkoutDetail({
             {performedAt}
           </p>
         </div>
+
+        <div className="live-workout-status">
+          {isActive ? (
+            <>
+              <span className="live-status-badge">
+                En curso
+              </span>
+
+              <div className="live-workout-timer">
+                <span>
+                  Duración
+                </span>
+
+                <strong>
+                  {formatDuration(
+                    elapsedSeconds
+                  )}
+                </strong>
+              </div>
+
+              <button
+                type="button"
+                className="primary-button"
+                onClick={() =>
+                  setShowCompleteConfirmation(
+                    true
+                  )
+                }
+              >
+                Finalizar entrenamiento
+              </button>
+            </>
+          ) : (
+            <span className="completed-status-badge">
+              Completado
+            </span>
+          )}
+        </div>
       </div>
 
       {workout.notes && (
@@ -294,33 +442,35 @@ function WorkoutDetail({
         </div>
       )}
 
-      <div className="workout-detail-section">
-        <div className="workout-detail-section-header">
-          <div>
-            <span className="section-eyebrow">
-              Ejercicios
-            </span>
+      {isActive && (
+        <div className="workout-detail-section">
+          <div className="workout-detail-section-header">
+            <div>
+              <span className="section-eyebrow">
+                Ejercicios
+              </span>
 
-            <h3>
-              Añadir ejercicio
-            </h3>
+              <h3>
+                Añadir ejercicio
+              </h3>
+            </div>
           </div>
-        </div>
 
-        <ExercisePicker
-          exercises={exercises}
-          excludedExerciseIds={
-            workoutExercises.map(
-              (exercise) =>
-                exercise.exerciseId
-            )
-          }
-          onSelectExercise={
-            onAddExercise
-          }
-          buttonText="Añadir al entrenamiento"
-        />
-      </div>
+          <ExercisePicker
+            exercises={exercises}
+            excludedExerciseIds={
+              workoutExercises.map(
+                (exercise) =>
+                  exercise.exerciseId
+              )
+            }
+            onSelectExercise={
+              onAddExercise
+            }
+            buttonText="Añadir al entrenamiento"
+          />
+        </div>
+      )}
 
       <div className="workout-detail-section">
         <div className="workout-detail-section-header">
@@ -335,16 +485,11 @@ function WorkoutDetail({
           </div>
 
           <span className="workout-exercise-count">
-            {
-              workoutExercises.length
-            }
+            {workoutExercises.length}
             {" "}
-            {
-              workoutExercises.length ===
-              1
-                ? "ejercicio"
-                : "ejercicios"
-            }
+            {workoutExercises.length === 1
+              ? "ejercicio"
+              : "ejercicios"}
           </span>
         </div>
 
@@ -386,17 +531,19 @@ function WorkoutDetail({
                         </h4>
                       </div>
 
-                      <button
-                        type="button"
-                        className="danger-button"
-                        onClick={() =>
-                          setExerciseToDelete(
-                            workoutExercise
-                          )
-                        }
-                      >
-                        Quitar ejercicio
-                      </button>
+                      {isActive && (
+                        <button
+                          type="button"
+                          className="danger-button"
+                          onClick={() =>
+                            setExerciseToDelete(
+                              workoutExercise
+                            )
+                          }
+                        >
+                          Quitar ejercicio
+                        </button>
+                      )}
                     </div>
 
                     {workoutExercise.sets
@@ -525,38 +672,44 @@ function WorkoutDetail({
                                     </span>
 
                                     <span>
-                                      {
-                                        set.reps
-                                      }
+                                      {set.reps}
                                     </span>
 
                                     <div className="workout-set-actions">
-                                      <button
-                                        type="button"
-                                        className="secondary-button"
-                                        onClick={() =>
-                                          startEditingSet(
-                                            set.id,
-                                            set.setNumber,
-                                            set.reps,
-                                            set.weight
-                                          )
-                                        }
-                                      >
-                                        Editar
-                                      </button>
+                                      {isActive ? (
+                                        <>
+                                          <button
+                                            type="button"
+                                            className="secondary-button"
+                                            onClick={() =>
+                                              startEditingSet(
+                                                set.id,
+                                                set.setNumber,
+                                                set.reps,
+                                                set.weight
+                                              )
+                                            }
+                                          >
+                                            Editar
+                                          </button>
 
-                                      <button
-                                        type="button"
-                                        className="danger-button"
-                                        onClick={() =>
-                                          setSetToDelete(
-                                            set.id
-                                          )
-                                        }
-                                      >
-                                        Eliminar
-                                      </button>
+                                          <button
+                                            type="button"
+                                            className="danger-button"
+                                            onClick={() =>
+                                              setSetToDelete(
+                                                set.id
+                                              )
+                                            }
+                                          >
+                                            Eliminar
+                                          </button>
+                                        </>
+                                      ) : (
+                                        <span>
+                                          —
+                                        </span>
+                                      )}
                                     </div>
                                   </>
                                 )}
@@ -567,64 +720,70 @@ function WorkoutDetail({
                       </div>
                     )}
 
-                    <div className="workout-add-set">
-                      <div>
-                        <label>
-                          Peso (kg)
-                        </label>
+                    {isActive && (
+                      <div className="workout-add-set">
+                        <div>
+                          <label>
+                            Peso (kg)
+                          </label>
 
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.5"
-                          value={
-                            newSetForm.weight
-                          }
-                          onChange={(event) =>
-                            updateNewSetForm(
-                              workoutExercise.id,
-                              "weight",
-                              event.target.value
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.5"
+                            value={
+                              newSetForm.weight
+                            }
+                            onChange={(
+                              event
+                            ) =>
+                              updateNewSetForm(
+                                workoutExercise.id,
+                                "weight",
+                                event.target.value
+                              )
+                            }
+                            placeholder="Ej. 70"
+                          />
+                        </div>
+
+                        <div>
+                          <label>
+                            Repeticiones
+                          </label>
+
+                          <input
+                            type="number"
+                            min="1"
+                            value={
+                              newSetForm.reps
+                            }
+                            onChange={(
+                              event
+                            ) =>
+                              updateNewSetForm(
+                                workoutExercise.id,
+                                "reps",
+                                event.target.value
+                              )
+                            }
+                            placeholder="Ej. 10"
+                          />
+                        </div>
+
+                        <button
+                          type="button"
+                          className="primary-button"
+                          onClick={() =>
+                            handleAddSet(
+                              workoutExercise
                             )
                           }
-                          placeholder="Ej. 70"
-                        />
+                        >
+                          Añadir serie
+                        </button>
                       </div>
-
-                      <div>
-                        <label>
-                          Repeticiones
-                        </label>
-
-                        <input
-                          type="number"
-                          min="1"
-                          value={
-                            newSetForm.reps
-                          }
-                          onChange={(event) =>
-                            updateNewSetForm(
-                              workoutExercise.id,
-                              "reps",
-                              event.target.value
-                            )
-                          }
-                          placeholder="Ej. 10"
-                        />
-                      </div>
-
-                      <button
-                        type="button"
-                        className="primary-button"
-                        onClick={() =>
-                          handleAddSet(
-                            workoutExercise
-                          )
-                        }
-                      >
-                        Añadir serie
-                      </button>
-                    </div>
+                    )}
                   </article>
                 );
               }
@@ -665,6 +824,27 @@ function WorkoutDetail({
             );
 
             setSetToDelete(null);
+          }}
+        />
+      )}
+
+      {showCompleteConfirmation && (
+        <ConfirmModal
+          title="Finalizar entrenamiento"
+          message="¿Seguro que quieres finalizar este entrenamiento? Después quedará guardado como completado."
+          confirmText="Finalizar"
+          cancelText="Continuar entrenando"
+          onCancel={() =>
+            setShowCompleteConfirmation(
+              false
+            )
+          }
+          onConfirm={() => {
+            onCompleteWorkout();
+
+            setShowCompleteConfirmation(
+              false
+            );
           }}
         />
       )}

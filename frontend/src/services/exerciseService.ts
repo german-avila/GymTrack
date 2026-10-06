@@ -2,6 +2,7 @@ import type { Exercise } from "../types/Exercise";
 
 const API_URL =
   `${import.meta.env.VITE_API_URL}/api/exercises`;
+  
 export async function getExercises(): Promise<Exercise[]> {
   const response = await fetch(API_URL);
 

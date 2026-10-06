@@ -8,7 +8,10 @@ export async function getWorkouts(req: Request, res: Response) {
         id,
         routine_id AS "routineId",
         performed_at AS "performedAt",
-        notes
+        notes,
+        status,
+        started_at AS "startedAt",
+        ended_at AS "endedAt"
       FROM workouts
       ORDER BY performed_at DESC
     `);
@@ -39,7 +42,10 @@ export async function getWorkoutById(req: Request, res: Response) {
           id,
           routine_id AS "routineId",
           performed_at AS "performedAt",
-          notes
+          notes,
+          status,
+          started_at AS "startedAt",
+          ended_at AS "endedAt"
         FROM workouts
         WHERE id = $1
       `,
@@ -104,48 +110,92 @@ export async function getWorkoutById(req: Request, res: Response) {
   }
 }
 
-export async function createWorkout(req: Request, res: Response) {
-  const { routineId, notes } = req.body;
+export async function createWorkout(
+  req: Request,
+  res: Response
+) {
+  const {
+    routineId = null,
+    notes = ""
+  } = req.body;
 
   if (
-    routineId !== undefined &&
     routineId !== null &&
-    (!Number.isInteger(routineId) || routineId <= 0)
+    (
+      !Number.isInteger(routineId) ||
+      routineId <= 0
+    )
   ) {
     return res.status(400).json({
       message: "Invalid routine ID"
     });
   }
 
-  if (notes !== undefined && typeof notes !== "string") {
-    return res.status(400).json({
-      message: "Notes must be a string"
-    });
-  }
-
   try {
-    const result = await pool.query(
-      `
-        INSERT INTO workouts (routine_id, notes)
-        VALUES ($1, $2)
-        RETURNING
-          id,
-          routine_id AS "routineId",
-          performed_at AS "performedAt",
-          notes
-      `,
-      [
-        routineId ?? null,
-        notes?.trim() ?? null
-      ]
+    const activeWorkoutResult =
+      await pool.query(
+        `
+          SELECT id
+          FROM workouts
+          WHERE status = 'active'
+          LIMIT 1
+        `
+      );
+
+    if (
+      activeWorkoutResult.rows.length > 0
+    ) {
+      return res.status(409).json({
+        message:
+          "There is already an active workout"
+      });
+    }
+
+    const result =
+      await pool.query(
+        `
+          INSERT INTO workouts (
+            routine_id,
+            notes,
+            status,
+            started_at
+          )
+          VALUES (
+            $1,
+            $2,
+            'active',
+            NOW()
+          )
+          RETURNING
+            id,
+            routine_id AS "routineId",
+            performed_at AS "performedAt",
+            notes,
+            status,
+            started_at AS "startedAt",
+            ended_at AS "endedAt"
+        `,
+        [
+          routineId,
+          typeof notes === "string" &&
+          notes.trim() !== ""
+            ? notes.trim()
+            : null
+        ]
+      );
+
+    return res
+      .status(201)
+      .json(result.rows[0]);
+  } catch (error) {
+    console.error(
+      "Failed to create workout:",
+      error
     );
 
-    return res.status(201).json(result.rows[0]);
-  } catch (error) {
-    console.error("Failed to create workout:", error);
-
     return res.status(500).json({
-      message: "Internal server error"
+      message:
+        "Internal server error"
     });
   }
 }
@@ -538,6 +588,29 @@ export async function createWorkoutFromRoutine(
   try {
     await client.query("BEGIN");
 
+    const activeWorkoutResult =
+      await client.query(
+        `
+          SELECT id
+          FROM workouts
+          WHERE status = 'active'
+          LIMIT 1
+        `
+      );
+
+    if (
+      activeWorkoutResult.rows.length > 0
+    ) {
+      await client.query(
+        "ROLLBACK"
+      );
+
+      return res.status(409).json({
+        message:
+          "There is already an active workout"
+      });
+    }
+
     const routineResult =
       await client.query(
         `
@@ -565,14 +638,23 @@ export async function createWorkoutFromRoutine(
       await client.query(
         `
           INSERT INTO workouts (
-            routine_id
+            routine_id,
+            status,
+            started_at
           )
-          VALUES ($1)
+          VALUES (
+            $1,
+            'active',
+            NOW()
+          )
           RETURNING
             id,
             routine_id AS "routineId",
             performed_at AS "performedAt",
-            notes
+            notes,
+            status,
+            started_at AS "startedAt",
+            ended_at AS "endedAt"
         `,
         [routineId]
       );
@@ -598,13 +680,11 @@ export async function createWorkoutFromRoutine(
       ]
     );
 
-    await client.query(
-      "COMMIT"
-    );
+    await client.query("COMMIT");
 
-    return res.status(201).json(
-      workout
-    );
+    return res
+      .status(201)
+      .json(workout);
   } catch (error) {
     await client.query(
       "ROLLBACK"
@@ -621,5 +701,89 @@ export async function createWorkoutFromRoutine(
     });
   } finally {
     client.release();
+  }
+}
+
+export async function completeWorkout(
+  req: Request,
+  res: Response
+) {
+  const workoutId =
+    Number(req.params.id);
+
+  if (
+    !Number.isInteger(workoutId) ||
+    workoutId <= 0
+  ) {
+    return res.status(400).json({
+      message: "Invalid workout ID"
+    });
+  }
+
+  try {
+    const workoutResult =
+      await pool.query(
+        `
+          SELECT
+            id,
+            status
+          FROM workouts
+          WHERE id = $1
+        `,
+        [workoutId]
+      );
+
+    if (
+      workoutResult.rows.length === 0
+    ) {
+      return res.status(404).json({
+        message:
+          "Workout not found"
+      });
+    }
+
+    if (
+      workoutResult.rows[0]
+        .status === "completed"
+    ) {
+      return res.status(400).json({
+        message:
+          "Workout is already completed"
+      });
+    }
+
+    const result =
+      await pool.query(
+        `
+          UPDATE workouts
+          SET
+            status = 'completed',
+            ended_at = NOW()
+          WHERE id = $1
+          RETURNING
+            id,
+            routine_id AS "routineId",
+            performed_at AS "performedAt",
+            notes,
+            status,
+            started_at AS "startedAt",
+            ended_at AS "endedAt"
+        `,
+        [workoutId]
+      );
+
+    return res
+      .status(200)
+      .json(result.rows[0]);
+  } catch (error) {
+    console.error(
+      "Failed to complete workout:",
+      error
+    );
+
+    return res.status(500).json({
+      message:
+        "Internal server error"
+    });
   }
 }

@@ -18,5 +18,10 @@ export type Workout = {
   routineId: number | null;
   performedAt: string;
   notes: string | null;
+
+  status: "active" | "completed";
+  startedAt: string | null;
+  endedAt: string | null;
+
   exercises?: WorkoutExercise[];
 };
