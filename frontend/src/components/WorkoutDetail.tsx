@@ -7,6 +7,8 @@ import ConfirmModal from "./ConfirmModal";
 import ExercisePicker from "./ExercisePicker";
 import PreviousExercisePerformance
   from "./PreviousExercisePerformance";
+import ExercisePRStatus
+  from "./ExercisePRStatus";
 
 import type { Exercise } from "../types/Exercise";
 import type {
@@ -703,6 +705,20 @@ function WorkoutDetail({
                         }
                         currentWorkoutId={
                           workout.id
+                        }
+                      />
+                    )}
+
+                    {isActive && (
+                      <ExercisePRStatus
+                        exerciseId={
+                          workoutExercise.exerciseId
+                        }
+                        currentWorkoutId={
+                          workout.id
+                        }
+                        currentSets={
+                          workoutExercise.sets
                         }
                       />
                     )}
