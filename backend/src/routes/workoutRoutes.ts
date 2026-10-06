@@ -9,13 +9,18 @@ import {
   addSetToWorkoutExercise,
   removeExerciseFromWorkout,
   deleteWorkoutSet,
-  updateWorkoutSet
+  updateWorkoutSet,
+  createWorkoutFromRoutine
 } from "../controllers/workoutController.js";
 
 export const workoutRouter = Router();
 
 workoutRouter.get("/", getWorkouts);
 workoutRouter.post("/", createWorkout);
+workoutRouter.post(
+  "/from-routine/:routineId",
+  createWorkoutFromRoutine
+);
 workoutRouter.get("/:id", getWorkoutById);
 workoutRouter.patch("/:id", updateWorkout);
 workoutRouter.delete("/:id", deleteWorkout);

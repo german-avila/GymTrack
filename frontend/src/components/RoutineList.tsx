@@ -6,24 +6,42 @@ import type { Routine } from "../types/Routine";
 
 type RoutineListProps = {
   routines: Routine[];
-  onDeleteRoutine: (id: number) => void;
-  onEditRoutine: (routine: Routine) => void;
-  onManageExercises: (routine: Routine) => void;
+
+  onDeleteRoutine: (
+    id: number
+  ) => void;
+
+  onEditRoutine: (
+    routine: Routine
+  ) => void;
+
+  onManageExercises: (
+    routine: Routine
+  ) => void;
+
+  onStartWorkout: (
+    routine: Routine
+  ) => void;
 };
 
 function RoutineList({
   routines,
   onDeleteRoutine,
   onEditRoutine,
-  onManageExercises
+  onManageExercises,
+  onStartWorkout
 }: RoutineListProps) {
-  const [routineToDelete, setRoutineToDelete] =
-    useState<Routine | null>(null);
+  const [
+    routineToDelete,
+    setRoutineToDelete
+  ] = useState<Routine | null>(null);
 
   if (routines.length === 0) {
     return (
       <div className="empty-state">
-        <p>Todavía no hay rutinas creadas.</p>
+        <p>
+          Todavía no hay rutinas creadas.
+        </p>
       </div>
     );
   }
@@ -31,95 +49,115 @@ function RoutineList({
   return (
     <>
       <div className="routine-grid">
-        {routines.map((routine) => (
-          <article
-            className="routine-card"
-            key={routine.id}
-          >
-            <div className="routine-card-header">
-              <div>
-                <span className="routine-card-label">
-                  Rutina
-                </span>
+        {routines.map((routine) => {
+          const exerciseCount =
+            routine.exercises?.length ?? 0;
 
-                <h3>{routine.name}</h3>
+          return (
+            <article
+              className="routine-card"
+              key={routine.id}
+            >
+              <div className="routine-card-header">
+                <div>
+                  <span className="section-eyebrow">
+                    Rutina
+                  </span>
+
+                  <h3>
+                    {routine.name}
+                  </h3>
+                </div>
+
+                <span className="routine-exercise-count">
+                  {exerciseCount}
+                  {" "}
+                  {exerciseCount === 1
+                    ? "ejercicio"
+                    : "ejercicios"}
+                </span>
               </div>
 
-              <span className="routine-count-badge">
-                {routine.exercises?.length ?? 0} ejercicios
-              </span>
-            </div>
+              <div className="routine-card-body">
+                <p>
+                  {routine.description ??
+                    "Sin descripción."}
+                </p>
 
-            <div className="routine-card-body">
-              <p>
-                {routine.description ??
-                  "Sin descripción."}
-              </p>
-
-              <div className="routine-exercise-preview">
-                <span className="routine-preview-title">
-                  Ejercicios
-                </span>
-
-                {routine.exercises &&
-                routine.exercises.length > 0 ? (
-                  <div className="routine-tags">
-                    {routine.exercises.map((exercise) => (
-                      <span
-                        className="routine-exercise-tag"
-                        key={exercise.id}
-                      >
-                        {exercise.name}
-                      </span>
-                    ))}
+                {exerciseCount > 0 && (
+                  <div className="routine-exercise-tags">
+                    {routine.exercises?.map(
+                      (exercise) => (
+                        <span
+                          key={exercise.id}
+                          className="routine-exercise-tag"
+                        >
+                          {exercise.name}
+                        </span>
+                      )
+                    )}
                   </div>
-                ) : (
-                  <p className="routine-empty-text">
-                    Todavía no hay ejercicios añadidos.
-                  </p>
                 )}
               </div>
-            </div>
 
-            <div className="routine-card-actions">
-              <button
-                type="button"
-                className="primary-button"
-                onClick={() =>
-                  onManageExercises(routine)
-                }
-              >
-                Gestionar ejercicios
-              </button>
+              <div className="routine-card-actions">
+                <button
+                  type="button"
+                  className="primary-button"
+                  onClick={() =>
+                    onStartWorkout(
+                      routine
+                    )
+                  }
+                >
+                  Empezar entrenamiento
+                </button>
 
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() =>
-                  onEditRoutine(routine)
-                }
-              >
-                Editar
-              </button>
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() =>
+                    onManageExercises(
+                      routine
+                    )
+                  }
+                >
+                  Gestionar ejercicios
+                </button>
 
-              <button
-                type="button"
-                className="danger-button"
-                onClick={() =>
-                  setRoutineToDelete(routine)
-                }
-              >
-                Eliminar
-              </button>
-            </div>
-          </article>
-        ))}
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() =>
+                    onEditRoutine(
+                      routine
+                    )
+                  }
+                >
+                  Editar
+                </button>
+
+                <button
+                  type="button"
+                  className="danger-button"
+                  onClick={() =>
+                    setRoutineToDelete(
+                      routine
+                    )
+                  }
+                >
+                  Eliminar
+                </button>
+              </div>
+            </article>
+          );
+        })}
       </div>
 
       {routineToDelete && (
         <ConfirmModal
           title="Eliminar rutina"
-          message={`¿Seguro que quieres eliminar la rutina "${routineToDelete.name}"?`}
+          message={`¿Seguro que quieres eliminar "${routineToDelete.name}"?`}
           confirmText="Eliminar"
           onCancel={() =>
             setRoutineToDelete(null)

@@ -515,3 +515,111 @@ export async function deleteWorkoutSet(
     });
   }
 }
+
+export async function createWorkoutFromRoutine(
+  req: Request,
+  res: Response
+) {
+  const routineId =
+    Number(req.params.routineId);
+
+  if (
+    !Number.isInteger(routineId) ||
+    routineId <= 0
+  ) {
+    return res.status(400).json({
+      message: "Invalid routine ID"
+    });
+  }
+
+  const client =
+    await pool.connect();
+
+  try {
+    await client.query("BEGIN");
+
+    const routineResult =
+      await client.query(
+        `
+          SELECT id
+          FROM routines
+          WHERE id = $1
+        `,
+        [routineId]
+      );
+
+    if (
+      routineResult.rows.length === 0
+    ) {
+      await client.query(
+        "ROLLBACK"
+      );
+
+      return res.status(404).json({
+        message:
+          "Routine not found"
+      });
+    }
+
+    const workoutResult =
+      await client.query(
+        `
+          INSERT INTO workouts (
+            routine_id
+          )
+          VALUES ($1)
+          RETURNING
+            id,
+            routine_id AS "routineId",
+            performed_at AS "performedAt",
+            notes
+        `,
+        [routineId]
+      );
+
+    const workout =
+      workoutResult.rows[0];
+
+    await client.query(
+      `
+        INSERT INTO workout_exercises (
+          workout_id,
+          exercise_id
+        )
+        SELECT
+          $1,
+          exercise_id
+        FROM routine_exercises
+        WHERE routine_id = $2
+      `,
+      [
+        workout.id,
+        routineId
+      ]
+    );
+
+    await client.query(
+      "COMMIT"
+    );
+
+    return res.status(201).json(
+      workout
+    );
+  } catch (error) {
+    await client.query(
+      "ROLLBACK"
+    );
+
+    console.error(
+      "Failed to create workout from routine:",
+      error
+    );
+
+    return res.status(500).json({
+      message:
+        "Internal server error"
+    });
+  } finally {
+    client.release();
+  }
+}

@@ -2,7 +2,7 @@ import type { Workout } from "../types/Workout";
 
 const API_URL =
   `${import.meta.env.VITE_API_URL}/api/workouts`;
-  
+
 export async function getWorkouts(): Promise<Workout[]> {
   const response = await fetch(API_URL);
 
@@ -181,4 +181,23 @@ export async function deleteWorkoutSet(
   if (!response.ok) {
     throw new Error("Failed to delete workout set");
   }
+}
+
+export async function createWorkoutFromRoutine(
+  routineId: number
+): Promise<Workout> {
+  const response = await fetch(
+    `${API_URL}/from-routine/${routineId}`,
+    {
+      method: "POST"
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      "Failed to create workout from routine"
+    );
+  }
+
+  return response.json();
 }

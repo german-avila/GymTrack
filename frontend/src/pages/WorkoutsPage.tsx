@@ -1,4 +1,11 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState
+} from "react";
+
+import {
+  useSearchParams
+} from "react-router-dom";
 
 import AlertMessage from "../components/AlertMessage";
 import WorkoutForm from "../components/WorkoutForm";
@@ -29,6 +36,9 @@ import {
 } from "../services/workoutService";
 
 function WorkoutsPage() {
+  const [searchParams] =
+    useSearchParams();
+
   const [workouts, setWorkouts] =
     useState<Workout[]>([]);
 
@@ -105,10 +115,32 @@ function WorkoutsPage() {
     loadWorkouts();
   }, []);
 
+  useEffect(() => {
+    const workoutId =
+      Number(
+        searchParams.get(
+          "workout"
+        )
+      );
+
+    if (
+      Number.isInteger(
+        workoutId
+      ) &&
+      workoutId > 0
+    ) {
+      viewWorkout(
+        workoutId
+      );
+    }
+  }, [searchParams]);
+
   function startEditingWorkout(
     workout: Workout
   ) {
-    setEditingWorkout(workout);
+    setEditingWorkout(
+      workout
+    );
   }
 
   function cancelEditingWorkout() {
@@ -167,7 +199,9 @@ function WorkoutsPage() {
       const workout =
         await getWorkoutById(id);
 
-      setSelectedWorkout(workout);
+      setSelectedWorkout(
+        workout
+      );
 
       setError("");
     } catch (error) {
@@ -194,7 +228,9 @@ function WorkoutsPage() {
           selectedWorkout.id
         );
 
-      setSelectedWorkout(workout);
+      setSelectedWorkout(
+        workout
+      );
     } catch (error) {
       console.error(error);
 
@@ -326,7 +362,9 @@ function WorkoutsPage() {
     setId: number
   ) {
     try {
-      await deleteWorkoutSet(setId);
+      await deleteWorkoutSet(
+        setId
+      );
 
       setError("");
       setSuccess(
@@ -357,7 +395,8 @@ function WorkoutsPage() {
           </h1>
 
           <p>
-            Registra y consulta tus sesiones de entrenamiento.
+            Registra y consulta tus sesiones
+            de entrenamiento.
           </p>
         </div>
       </div>
@@ -378,7 +417,9 @@ function WorkoutsPage() {
 
       <WorkoutForm
         routines={routines}
-        editingWorkout={editingWorkout}
+        editingWorkout={
+          editingWorkout
+        }
         onWorkoutSaved={
           handleWorkoutSaved
         }
@@ -390,7 +431,9 @@ function WorkoutsPage() {
       <WorkoutList
         workouts={workouts}
         routines={routines}
-        onViewWorkout={viewWorkout}
+        onViewWorkout={
+          viewWorkout
+        }
         onEditWorkout={
           startEditingWorkout
         }
