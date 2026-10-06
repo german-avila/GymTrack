@@ -6,7 +6,10 @@ import {
   deleteWorkout,
   updateWorkout,
   addExerciseToWorkout,
-  addSetToWorkoutExercise
+  addSetToWorkoutExercise,
+  removeExerciseFromWorkout,
+  deleteWorkoutSet,
+  updateWorkoutSet
 } from "../controllers/workoutController.js";
 
 export const workoutRouter = Router();
@@ -21,3 +24,9 @@ workoutRouter.post(
   "/exercises/:workoutExerciseId/sets",
   addSetToWorkoutExercise
 );
+workoutRouter.delete(
+  "/:id/exercises/:workoutExerciseId",
+  removeExerciseFromWorkout
+);
+workoutRouter.patch("/sets/:setId", updateWorkoutSet);
+workoutRouter.delete("/sets/:setId", deleteWorkoutSet);

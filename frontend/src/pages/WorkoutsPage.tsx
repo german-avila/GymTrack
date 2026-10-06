@@ -16,7 +16,10 @@ import {
   addSetToWorkoutExercise,
   deleteWorkout as deleteWorkoutRequest,
   getWorkoutById,
-  getWorkouts
+  getWorkouts,
+  removeExerciseFromWorkout,
+  deleteWorkoutSet,
+  updateWorkoutSet
 } from "../services/workoutService";
 
 function WorkoutsPage() {
@@ -134,6 +137,86 @@ function WorkoutsPage() {
     }
   }
 
+  async function removeExerciseFromSelectedWorkout(
+    workoutExerciseId: number
+  ) {
+    if (!selectedWorkout) {
+      return;
+    }
+
+    try {
+      await removeExerciseFromWorkout(
+        selectedWorkout.id,
+        workoutExerciseId
+      );
+
+      const updatedWorkout =
+        await getWorkoutById(selectedWorkout.id);
+
+      setSelectedWorkout(updatedWorkout);
+      setWorkoutError(null);
+    } catch (error) {
+      console.error(error);
+      setWorkoutError(
+        "No se pudo quitar el ejercicio del entrenamiento"
+      );
+    }
+  }
+
+  async function updateSetInSelectedWorkout(
+  setId: number,
+  setNumber: number,
+  reps: number,
+  weight: number | null
+) {
+  if (!selectedWorkout) {
+    return;
+  }
+
+  try {
+    await updateWorkoutSet(
+      setId,
+      setNumber,
+      reps,
+      weight
+    );
+
+    const updatedWorkout =
+      await getWorkoutById(selectedWorkout.id);
+
+    setSelectedWorkout(updatedWorkout);
+    setWorkoutError(null);
+  } catch (error) {
+    console.error(error);
+    setWorkoutError(
+      "No se pudo actualizar la serie"
+    );
+  }
+}
+
+async function deleteSetFromSelectedWorkout(
+  setId: number
+) {
+  if (!selectedWorkout) {
+    return;
+  }
+
+  try {
+    await deleteWorkoutSet(setId);
+
+    const updatedWorkout =
+      await getWorkoutById(selectedWorkout.id);
+
+    setSelectedWorkout(updatedWorkout);
+    setWorkoutError(null);
+  } catch (error) {
+    console.error(error);
+    setWorkoutError(
+      "No se pudo eliminar la serie"
+    );
+  }
+}
+
   async function addSetToSelectedWorkoutExercise(
     workoutExerciseId: number,
     setNumber: number,
@@ -162,6 +245,8 @@ function WorkoutsPage() {
       setWorkoutError("No se pudo añadir la serie");
     }
   }
+
+  
 
   useEffect(() => {
     loadExercises();
@@ -195,6 +280,9 @@ function WorkoutsPage() {
           exercises={exercises}
           onAddExercise={addExerciseToSelectedWorkout}
           onAddSet={addSetToSelectedWorkoutExercise}
+          onRemoveExercise={removeExerciseFromSelectedWorkout}        
+          onUpdateSet={updateSetInSelectedWorkout}
+          onDeleteSet={deleteSetFromSelectedWorkout}
         />
       )}
     </section>

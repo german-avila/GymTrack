@@ -358,3 +358,160 @@ export async function addSetToWorkoutExercise(req: Request, res: Response) {
     });
   }
 }
+
+export async function removeExerciseFromWorkout(
+  req: Request,
+  res: Response
+) {
+  const workoutId = Number(req.params.id);
+  const workoutExerciseId = Number(req.params.workoutExerciseId);
+
+  if (!Number.isInteger(workoutId) || workoutId <= 0) {
+    return res.status(400).json({
+      message: "Invalid workout ID"
+    });
+  }
+
+  if (
+    !Number.isInteger(workoutExerciseId) ||
+    workoutExerciseId <= 0
+  ) {
+    return res.status(400).json({
+      message: "Invalid workout exercise ID"
+    });
+  }
+
+  try {
+    const result = await pool.query(
+      `
+        DELETE FROM workout_exercises
+        WHERE id = $1
+          AND workout_id = $2
+      `,
+      [workoutExerciseId, workoutId]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({
+        message: "Workout exercise not found"
+      });
+    }
+
+    return res.status(204).send();
+  } catch (error) {
+    console.error(
+      "Failed to remove exercise from workout:",
+      error
+    );
+
+    return res.status(500).json({
+      message: "Internal server error"
+    });
+  }
+}
+
+export async function updateWorkoutSet(
+  req: Request,
+  res: Response
+) {
+  const setId = Number(req.params.setId);
+  const { setNumber, reps, weight } = req.body;
+
+  if (!Number.isInteger(setId) || setId <= 0) {
+    return res.status(400).json({
+      message: "Invalid set ID"
+    });
+  }
+
+  if (!Number.isInteger(setNumber) || setNumber <= 0) {
+    return res.status(400).json({
+      message: "Invalid set number"
+    });
+  }
+
+  if (!Number.isInteger(reps) || reps <= 0) {
+    return res.status(400).json({
+      message: "Invalid reps"
+    });
+  }
+
+  if (
+    weight !== null &&
+    (typeof weight !== "number" || weight < 0)
+  ) {
+    return res.status(400).json({
+      message: "Invalid weight"
+    });
+  }
+
+  try {
+    const result = await pool.query(
+      `
+        UPDATE workout_sets
+        SET
+          set_number = $1,
+          reps = $2,
+          weight = $3
+        WHERE id = $4
+        RETURNING
+          id,
+          workout_exercise_id AS "workoutExerciseId",
+          set_number AS "setNumber",
+          reps,
+          weight
+      `,
+      [setNumber, reps, weight, setId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        message: "Set not found"
+      });
+    }
+
+    return res.status(200).json(result.rows[0]);
+  } catch (error) {
+    console.error("Failed to update set:", error);
+
+    return res.status(500).json({
+      message: "Internal server error"
+    });
+  }
+}
+
+export async function deleteWorkoutSet(
+  req: Request,
+  res: Response
+) {
+  const setId = Number(req.params.setId);
+
+  if (!Number.isInteger(setId) || setId <= 0) {
+    return res.status(400).json({
+      message: "Invalid set ID"
+    });
+  }
+
+  try {
+    const result = await pool.query(
+      `
+        DELETE FROM workout_sets
+        WHERE id = $1
+      `,
+      [setId]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({
+        message: "Set not found"
+      });
+    }
+
+    return res.status(204).send();
+  } catch (error) {
+    console.error("Failed to delete set:", error);
+
+    return res.status(500).json({
+      message: "Internal server error"
+    });
+  }
+}

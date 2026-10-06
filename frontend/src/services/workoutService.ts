@@ -124,3 +124,60 @@ export async function addSetToWorkoutExercise(
       throw new Error("Failed to add set to workout exercise");
     }
 }
+
+export async function removeExerciseFromWorkout(
+  workoutId: number,
+  workoutExerciseId: number
+): Promise<void> {
+  const response = await fetch(
+    `${API_URL}/${workoutId}/exercises/${workoutExerciseId}`,
+    {
+      method: "DELETE"
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to remove exercise from workout");
+  }
+}
+
+export async function updateWorkoutSet(
+  setId: number,
+  setNumber: number,
+  reps: number,
+  weight: number | null
+): Promise<void> {
+  const response = await fetch(
+    `${API_URL}/sets/${setId}`,
+    {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        setNumber,
+        reps,
+        weight
+      })
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to update workout set");
+  }
+}
+
+export async function deleteWorkoutSet(
+  setId: number
+): Promise<void> {
+  const response = await fetch(
+    `${API_URL}/sets/${setId}`,
+    {
+      method: "DELETE"
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to delete workout set");
+  }
+}
