@@ -6,8 +6,12 @@ import type { Exercise } from "../types/Exercise";
 
 type ExerciseListProps = {
   exercises: Exercise[];
-  onEditExercise: (exercise: Exercise) => void;
-  onDeleteExercise: (id: number) => void;
+  onEditExercise: (
+    exercise: Exercise
+  ) => void;
+  onDeleteExercise: (
+    id: number
+  ) => void;
 };
 
 function ExerciseList({
@@ -15,13 +19,17 @@ function ExerciseList({
   onEditExercise,
   onDeleteExercise
 }: ExerciseListProps) {
-  const [exerciseToDelete, setExerciseToDelete] =
-    useState<Exercise | null>(null);
+  const [
+    exerciseToDelete,
+    setExerciseToDelete
+  ] = useState<Exercise | null>(null);
 
   if (exercises.length === 0) {
     return (
       <div className="empty-state">
-        <p>Todavía no hay ejercicios registrados.</p>
+        <p>
+          Todavía no hay ejercicios registrados.
+        </p>
       </div>
     );
   }
@@ -35,17 +43,25 @@ function ExerciseList({
             key={exercise.id}
           >
             <div className="exercise-card-header">
-              <div>
-                <span className="exercise-card-label">
-                  Ejercicio
+              <span className="exercise-card-label">
+                Ejercicio
+              </span>
+
+              <h3>
+                {exercise.name}
+              </h3>
+
+              <div className="exercise-badges">
+                <span className="exercise-muscle-badge">
+                  {exercise.muscleGroup}
                 </span>
 
-                <h3>{exercise.name}</h3>
+                {exercise.isSystem && (
+                  <span className="exercise-origin-badge">
+                    GymTrack
+                  </span>
+                )}
               </div>
-
-              <span className="exercise-muscle-badge">
-                {exercise.muscleGroup}
-              </span>
             </div>
 
             <div className="exercise-card-body">
@@ -56,25 +72,37 @@ function ExerciseList({
             </div>
 
             <div className="exercise-card-actions">
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() =>
-                  onEditExercise(exercise)
-                }
-              >
-                Editar
-              </button>
+              {exercise.isSystem ? (
+                <span className="system-exercise-info">
+                  Incluido en el catálogo de GymTrack
+                </span>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() =>
+                      onEditExercise(
+                        exercise
+                      )
+                    }
+                  >
+                    Editar
+                  </button>
 
-              <button
-                type="button"
-                className="danger-button"
-                onClick={() =>
-                  setExerciseToDelete(exercise)
-                }
-              >
-                Eliminar
-              </button>
+                  <button
+                    type="button"
+                    className="danger-button"
+                    onClick={() =>
+                      setExerciseToDelete(
+                        exercise
+                      )
+                    }
+                  >
+                    Eliminar
+                  </button>
+                </>
+              )}
             </div>
           </article>
         ))}

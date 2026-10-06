@@ -3,4 +3,5 @@ export type Exercise = {
   name: string;
   muscleGroup: string;
   description: string | null;
+  isSystem: boolean;
 };

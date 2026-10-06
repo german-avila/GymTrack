@@ -1422,3 +1422,51 @@
     transform: translateY(0);
   }
 }
+
+/* =========================
+   EXERCISE ORIGIN
+========================= */
+
+.exercise-badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.exercise-origin-badge {
+  display: inline-flex;
+  align-items: center;
+
+  padding: 6px 9px;
+
+  border-radius: 999px;
+
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+
+  white-space: nowrap;
+}
+
+.exercise-origin-badge.system {
+  background-color: rgb(212 167 44 / 0.1);
+  border: 1px solid rgb(212 167 44 / 0.3);
+
+  color: #f0c75e;
+}
+
+.exercise-origin-badge.custom {
+  background-color: #252a33;
+  border: 1px solid #3a414d;
+
+  color: #cbd5e1;
+}
+
+.system-exercise-info {
+  color: #64748b;
+
+  font-size: 12px;
+  font-weight: 600;
+}

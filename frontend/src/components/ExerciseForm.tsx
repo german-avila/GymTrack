@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
+
 import type { Exercise } from "../types/Exercise";
+
+import { MUSCLE_GROUPS } from "../constants/muscleGroups";
+
 import {
   createExercise,
   updateExercise
@@ -16,17 +20,34 @@ function ExerciseForm({
   editingExercise,
   onCancelEdit
 }: ExerciseFormProps) {
-  const [name, setName] = useState("");
-  const [muscleGroup, setMuscleGroup] = useState("");
-  const [description, setDescription] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [name, setName] =
+    useState("");
+
+  const [muscleGroup, setMuscleGroup] =
+    useState("");
+
+  const [description, setDescription] =
+    useState("");
+
+  const [isSubmitting, setIsSubmitting] =
+    useState(false);
+
+  const [error, setError] =
+    useState<string | null>(null);
 
   useEffect(() => {
     if (editingExercise) {
-      setName(editingExercise.name);
-      setMuscleGroup(editingExercise.muscleGroup);
-      setDescription(editingExercise.description ?? "");
+      setName(
+        editingExercise.name
+      );
+
+      setMuscleGroup(
+        editingExercise.muscleGroup
+      );
+
+      setDescription(
+        editingExercise.description ?? ""
+      );
     } else {
       setName("");
       setMuscleGroup("");
@@ -34,11 +55,19 @@ function ExerciseForm({
     }
   }, [editingExercise]);
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(
+    event: React.FormEvent<HTMLFormElement>
+  ) {
     event.preventDefault();
 
-    if (name.trim() === "" || muscleGroup.trim() === "") {
-      setError("El nombre y el grupo muscular son obligatorios.");
+    if (
+      name.trim() === "" ||
+      muscleGroup === ""
+    ) {
+      setError(
+        "El nombre y el grupo muscular son obligatorios."
+      );
+
       return;
     }
 
@@ -66,55 +95,103 @@ function ExerciseForm({
       setDescription("");
 
       onExerciseCreated();
-    } catch {
-      setError("No se pudo guardar el ejercicio.");
+    } catch (error) {
+      console.error(error);
+
+      setError(
+        "No se pudo guardar el ejercicio."
+      );
     } finally {
       setIsSubmitting(false);
     }
   }
 
   return (
-    <form className="exercise-form" onSubmit={handleSubmit}>
+    <form
+      className="exercise-form"
+      onSubmit={handleSubmit}
+    >
       <h2>
-        {editingExercise ? "Editar ejercicio" : "Añadir ejercicio"}
+        {editingExercise
+          ? "Editar ejercicio"
+          : "Añadir ejercicio"}
       </h2>
 
       <div className="form-group">
-        <label htmlFor="name">Nombre</label>
+        <label htmlFor="name">
+          Nombre
+        </label>
+
         <input
           id="name"
           type="text"
           value={name}
-          onChange={(event) => setName(event.target.value)}
+          onChange={(event) =>
+            setName(
+              event.target.value
+            )
+          }
+          placeholder="Ej. Press banca"
         />
       </div>
 
       <div className="form-group">
-        <label htmlFor="muscleGroup">Grupo muscular</label>
-        <input
+        <label htmlFor="muscleGroup">
+          Grupo muscular
+        </label>
+
+        <select
           id="muscleGroup"
-          type="text"
           value={muscleGroup}
-          onChange={(event) => setMuscleGroup(event.target.value)}
-        />
+          onChange={(event) =>
+            setMuscleGroup(
+              event.target.value
+            )
+          }
+        >
+          <option value="">
+            Selecciona un grupo muscular
+          </option>
+
+          {MUSCLE_GROUPS.map(
+            (group) => (
+              <option
+                key={group}
+                value={group}
+              >
+                {group}
+              </option>
+            )
+          )}
+        </select>
       </div>
 
       <div className="form-group">
-        <label htmlFor="description">Descripción</label>
+        <label htmlFor="description">
+          Descripción
+        </label>
+
         <textarea
           id="description"
           value={description}
-          onChange={(event) => setDescription(event.target.value)}
+          onChange={(event) =>
+            setDescription(
+              event.target.value
+            )
+          }
+          placeholder="Descripción opcional del ejercicio"
         />
       </div>
 
-      {error && <p>{error}</p>}
+      {error && (
+        <p>{error}</p>
+      )}
 
       <button
         className="primary-button"
         type="submit"
         disabled={isSubmitting}
-        >
+      >
         {isSubmitting
           ? "Guardando..."
           : editingExercise
@@ -124,10 +201,10 @@ function ExerciseForm({
 
       {editingExercise && (
         <button
-            className="secondary-button"
-            type="button"
-            onClick={onCancelEdit}
-            >
+          className="secondary-button"
+          type="button"
+          onClick={onCancelEdit}
+        >
           Cancelar
         </button>
       )}
