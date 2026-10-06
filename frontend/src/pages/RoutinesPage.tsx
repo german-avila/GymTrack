@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 
+import AlertMessage from "../components/AlertMessage";
+import RoutineExerciseManager from "../components/RoutineExerciseManager";
 import RoutineForm from "../components/RoutineForm";
 import RoutineList from "../components/RoutineList";
-import RoutineExerciseManager from "../components/RoutineExerciseManager";
 
 import type { Exercise } from "../types/Exercise";
 import type { Routine } from "../types/Routine";
@@ -18,8 +19,11 @@ import {
 } from "../services/routineService";
 
 function RoutinesPage() {
-  const [routines, setRoutines] = useState<Routine[]>([]);
-  const [exercises, setExercises] = useState<Exercise[]>([]);
+  const [routines, setRoutines] =
+    useState<Routine[]>([]);
+
+  const [exercises, setExercises] =
+    useState<Exercise[]>([]);
 
   const [editingRoutine, setEditingRoutine] =
     useState<Routine | null>(null);
@@ -27,7 +31,10 @@ function RoutinesPage() {
   const [selectedRoutine, setSelectedRoutine] =
     useState<Routine | null>(null);
 
-  const [routineError, setRoutineError] =
+  const [error, setError] =
+    useState<string | null>(null);
+
+  const [success, setSuccess] =
     useState<string | null>(null);
 
   async function loadRoutines() {
@@ -35,40 +42,45 @@ function RoutinesPage() {
       const data = await getRoutines();
 
       setRoutines(data);
-      setRoutineError(null);
-    } catch {
-      setRoutineError("No se pudieron cargar las rutinas.");
+    } catch (error) {
+      console.error(error);
+
+      setError(
+        "No se pudieron cargar las rutinas."
+      );
+
+      setSuccess(null);
     }
   }
 
   async function loadExercises() {
     try {
       const data = await getExercises();
+
       setExercises(data);
-    } catch {
-      setRoutineError("No se pudieron cargar los ejercicios.");
+    } catch (error) {
+      console.error(error);
+
+      setError(
+        "No se pudieron cargar los ejercicios."
+      );
+
+      setSuccess(null);
     }
   }
 
-  async function deleteRoutine(id: number) {
-    try {
-      await deleteRoutineRequest(id);
-      await loadRoutines();
+  useEffect(() => {
+    loadRoutines();
+    loadExercises();
+  }, []);
 
-      if (editingRoutine?.id === id) {
-        setEditingRoutine(null);
-      }
-
-      if (selectedRoutine?.id === id) {
-        setSelectedRoutine(null);
-      }
-    } catch {
-      setRoutineError("No se pudo eliminar la rutina.");
-    }
-  }
-
-  function startEditingRoutine(routine: Routine) {
+  function startEditingRoutine(
+    routine: Routine
+  ) {
     setEditingRoutine(routine);
+
+    setError(null);
+    setSuccess(null);
   }
 
   function cancelEditingRoutine() {
@@ -76,19 +88,113 @@ function RoutinesPage() {
   }
 
   async function handleRoutineSaved() {
-    await loadRoutines();
-    setEditingRoutine(null);
+    try {
+      const wasEditing =
+        editingRoutine !== null;
+
+      setEditingRoutine(null);
+
+      await loadRoutines();
+
+      setError(null);
+
+      setSuccess(
+        wasEditing
+          ? "Rutina actualizada correctamente."
+          : "Rutina creada correctamente."
+      );
+    } catch (error) {
+      console.error(error);
+
+      setError(
+        "La rutina se guardó, pero no se pudo actualizar la lista."
+      );
+
+      setSuccess(null);
+    }
   }
 
-  async function manageRoutineExercises(routine: Routine) {
+  async function deleteRoutine(
+    routineId: number
+  ) {
     try {
-      const fullRoutine = await getRoutineById(routine.id);
+      await deleteRoutineRequest(
+        routineId
+      );
 
-      setSelectedRoutine(fullRoutine);
-      setRoutineError(null);
-    } catch {
-      setRoutineError("No se pudo cargar la rutina.");
+      if (
+        editingRoutine?.id ===
+        routineId
+      ) {
+        setEditingRoutine(null);
+      }
+
+      if (
+        selectedRoutine?.id ===
+        routineId
+      ) {
+        setSelectedRoutine(null);
+      }
+
+      await loadRoutines();
+
+      setError(null);
+
+      setSuccess(
+        "Rutina eliminada correctamente."
+      );
+    } catch (error) {
+      console.error(error);
+
+      setError(
+        "No se pudo eliminar la rutina."
+      );
+
+      setSuccess(null);
     }
+  }
+
+  async function manageExercises(
+    routine: Routine
+  ) {
+    try {
+      const detailedRoutine =
+        await getRoutineById(
+          routine.id
+        );
+
+      setSelectedRoutine(
+        detailedRoutine
+      );
+
+      setError(null);
+      setSuccess(null);
+    } catch (error) {
+      console.error(error);
+
+      setError(
+        "No se pudo cargar la rutina."
+      );
+
+      setSuccess(null);
+    }
+  }
+
+  async function refreshSelectedRoutine() {
+    if (!selectedRoutine) {
+      return;
+    }
+
+    const detailedRoutine =
+      await getRoutineById(
+        selectedRoutine.id
+      );
+
+    setSelectedRoutine(
+      detailedRoutine
+    );
+
+    await loadRoutines();
   }
 
   async function addExerciseToSelectedRoutine(
@@ -104,15 +210,21 @@ function RoutinesPage() {
         exerciseId
       );
 
-      const updatedRoutine =
-        await getRoutineById(selectedRoutine.id);
+      await refreshSelectedRoutine();
 
-      setSelectedRoutine(updatedRoutine);
-      setRoutineError(null);
-    } catch {
-      setRoutineError(
+      setError(null);
+
+      setSuccess(
+        "Ejercicio añadido a la rutina."
+      );
+    } catch (error) {
+      console.error(error);
+
+      setError(
         "No se pudo añadir el ejercicio a la rutina."
       );
+
+      setSuccess(null);
     }
   }
 
@@ -129,49 +241,102 @@ function RoutinesPage() {
         exerciseId
       );
 
-      const updatedRoutine =
-        await getRoutineById(selectedRoutine.id);
+      await refreshSelectedRoutine();
 
-      setSelectedRoutine(updatedRoutine);
-      setRoutineError(null);
-    } catch {
-      setRoutineError(
-        "No se pudo quitar el ejercicio de la rutina."
+      setError(null);
+
+      setSuccess(
+        "Ejercicio eliminado de la rutina."
       );
+    } catch (error) {
+      console.error(error);
+
+      setError(
+        "No se pudo eliminar el ejercicio de la rutina."
+      );
+
+      setSuccess(null);
     }
   }
 
-  useEffect(() => {
-    loadRoutines();
-    loadExercises();
-  }, []);
-
   return (
     <section>
-      <h2>Rutinas</h2>
+      <div className="dashboard-header">
+        <div>
+          <span className="workout-date-label">
+            Planificación
+          </span>
 
-      <RoutineForm
-        onRoutineSaved={handleRoutineSaved}
-        editingRoutine={editingRoutine}
-        onCancelEdit={cancelEditingRoutine}
-      />
+          <h2>Rutinas</h2>
 
-      {routineError && <p>{routineError}</p>}
+          <p>
+            Organiza tus ejercicios en rutinas
+            para reutilizarlas en tus
+            entrenamientos.
+          </p>
+        </div>
+      </div>
 
-      <RoutineList
-        routines={routines}
-        onDeleteRoutine={deleteRoutine}
-        onEditRoutine={startEditingRoutine}
-        onManageExercises={manageRoutineExercises}
-      />
+      {error && (
+        <AlertMessage
+          type="error"
+          message={error}
+        />
+      )}
+
+      {success && (
+        <AlertMessage
+          type="success"
+          message={success}
+        />
+      )}
+
+      <div className="dashboard-section">
+        <RoutineForm
+          editingRoutine={
+            editingRoutine
+          }
+          onRoutineSaved={
+            handleRoutineSaved
+          }
+          onCancelEdit={
+            cancelEditingRoutine
+          }
+        />
+      </div>
+
+      <div className="dashboard-section">
+        <h3>Mis rutinas</h3>
+
+        <RoutineList
+          routines={routines}
+          onDeleteRoutine={
+            deleteRoutine
+          }
+          onEditRoutine={
+            startEditingRoutine
+          }
+          onManageExercises={
+            manageExercises
+          }
+        />
+      </div>
 
       {selectedRoutine && (
-        <RoutineExerciseManager
-          routine={selectedRoutine}
-          exercises={exercises}
-          onAddExercise={addExerciseToSelectedRoutine}
-          onRemoveExercise={removeExerciseFromSelectedRoutine}
-        />
+        <div className="dashboard-section">
+          <RoutineExerciseManager
+            routine={
+              selectedRoutine
+            }
+            exercises={exercises}
+            onAddExercise={
+              addExerciseToSelectedRoutine
+            }
+            onRemoveExercise={
+              removeExerciseFromSelectedRoutine
+            }
+          />
+        </div>
       )}
     </section>
   );

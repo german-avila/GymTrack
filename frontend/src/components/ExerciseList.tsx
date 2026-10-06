@@ -1,38 +1,103 @@
+import { useState } from "react";
+
+import ConfirmModal from "./ConfirmModal";
+
 import type { Exercise } from "../types/Exercise";
 
 type ExerciseListProps = {
   exercises: Exercise[];
-  onDeleteExercise: (id: number) => void;
   onEditExercise: (exercise: Exercise) => void;
+  onDeleteExercise: (id: number) => void;
 };
 
 function ExerciseList({
   exercises,
-  onDeleteExercise,
-  onEditExercise
+  onEditExercise,
+  onDeleteExercise
 }: ExerciseListProps) {
+  const [exerciseToDelete, setExerciseToDelete] =
+    useState<Exercise | null>(null);
+
+  if (exercises.length === 0) {
+    return (
+      <div className="empty-state">
+        <p>Todavía no hay ejercicios registrados.</p>
+      </div>
+    );
+  }
+
   return (
-    <ul className="exercise-list">
-      {exercises.map((exercise) => (
-        <li className="exercise-item" key={exercise.id}>
-          <strong>{exercise.name}</strong> - {exercise.muscleGroup}
-
-          <button
-            className="secondary-button"
-            onClick={() => onEditExercise(exercise)}
+    <>
+      <div className="exercise-grid">
+        {exercises.map((exercise) => (
+          <article
+            className="exercise-card"
+            key={exercise.id}
           >
-            Editar
-          </button>
+            <div className="exercise-card-header">
+              <div>
+                <span className="exercise-card-label">
+                  Ejercicio
+                </span>
 
-          <button
-            className="danger-button"
-            onClick={() => onDeleteExercise(exercise.id)}
-          >
-            Eliminar
-          </button>
-        </li>
-      ))}
-    </ul>
+                <h3>{exercise.name}</h3>
+              </div>
+
+              <span className="exercise-muscle-badge">
+                {exercise.muscleGroup}
+              </span>
+            </div>
+
+            <div className="exercise-card-body">
+              <p>
+                {exercise.description ??
+                  "Sin descripción."}
+              </p>
+            </div>
+
+            <div className="exercise-card-actions">
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() =>
+                  onEditExercise(exercise)
+                }
+              >
+                Editar
+              </button>
+
+              <button
+                type="button"
+                className="danger-button"
+                onClick={() =>
+                  setExerciseToDelete(exercise)
+                }
+              >
+                Eliminar
+              </button>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      {exerciseToDelete && (
+        <ConfirmModal
+          title="Eliminar ejercicio"
+          message={`¿Seguro que quieres eliminar "${exerciseToDelete.name}"?`}
+          confirmText="Eliminar"
+          onCancel={() =>
+            setExerciseToDelete(null)
+          }
+          onConfirm={() => {
+            onDeleteExercise(
+              exerciseToDelete.id
+            );
+
+            setExerciseToDelete(null);
+          }}
+        />
+      )}
+    </>
   );
 }
 

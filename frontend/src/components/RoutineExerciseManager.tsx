@@ -14,57 +14,108 @@ function RoutineExerciseManager({
   onAddExercise,
   onRemoveExercise
 }: RoutineExerciseManagerProps) {
+  const availableExercises = exercises.filter(
+    (exercise) =>
+      !routine.exercises?.some(
+        (routineExercise) =>
+          routineExercise.id === exercise.id
+      )
+  );
+
   return (
-    <section>
-      <h3>Ejercicios de {routine.name}</h3>
+    <section className="routine-manager">
+      <div className="routine-manager-header">
+        <div>
+          <span className="routine-card-label">
+            Gestionar rutina
+          </span>
 
-      <h4>En la rutina</h4>
+          <h3>{routine.name}</h3>
 
-      {routine.exercises && routine.exercises.length > 0 ? (
-        <ul>
-          {routine.exercises.map((exercise) => (
-            <li key={exercise.id}>
-              <strong>{exercise.name}</strong> - {exercise.muscleGroup}
+          <p>
+            Añade o elimina ejercicios de esta rutina.
+          </p>
+        </div>
 
-              <button
-                className="danger-button"
-                onClick={() => onRemoveExercise(exercise.id)}
+        <span className="routine-count-badge">
+          {routine.exercises?.length ?? 0} ejercicios
+        </span>
+      </div>
+
+      <div className="routine-manager-section">
+        <h4>En la rutina</h4>
+
+        {routine.exercises &&
+        routine.exercises.length > 0 ? (
+          <div className="routine-manager-list">
+            {routine.exercises.map((exercise) => (
+              <div
+                className="routine-manager-item"
+                key={exercise.id}
               >
-                Quitar
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p>Esta rutina todavía no tiene ejercicios.</p>
-      )}
+                <div>
+                  <strong>{exercise.name}</strong>
 
-      <h4>Añadir ejercicios</h4>
+                  <p>{exercise.muscleGroup}</p>
+                </div>
 
-      <ul>
-        {exercises.map((exercise) => {
-          const isInRoutine = routine.exercises?.some(
-            (routineExercise) => routineExercise.id === exercise.id
-          );
+                <button
+                  type="button"
+                  className="danger-button"
+                  onClick={() =>
+                    onRemoveExercise(exercise.id)
+                  }
+                >
+                  Quitar
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="empty-state">
+            <p>
+              Esta rutina todavía no tiene ejercicios.
+            </p>
+          </div>
+        )}
+      </div>
 
-          if (isInRoutine) {
-            return null;
-          }
+      <div className="routine-manager-section">
+        <h4>Añadir ejercicios</h4>
 
-          return (
-            <li key={exercise.id}>
-              <strong>{exercise.name}</strong> - {exercise.muscleGroup}
-
-              <button
-                className="primary-button"
-                onClick={() => onAddExercise(exercise.id)}
+        {availableExercises.length === 0 ? (
+          <div className="empty-state">
+            <p>
+              No hay más ejercicios disponibles para añadir.
+            </p>
+          </div>
+        ) : (
+          <div className="routine-manager-list">
+            {availableExercises.map((exercise) => (
+              <div
+                className="routine-manager-item"
+                key={exercise.id}
               >
-                Añadir
-              </button>
-            </li>
-          );
-        })}
-      </ul>
+                <div>
+                  <strong>{exercise.name}</strong>
+
+                  <p>{exercise.muscleGroup}</p>
+                </div>
+
+                <button
+                  type="button"
+                  className="primary-button"
+                  onClick={() =>
+                    onAddExercise(exercise.id)
+                  }
+                >
+                  Añadir
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </section>
   );
 }

@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 
+import AlertMessage from "../components/AlertMessage";
+import WorkoutDetail from "../components/WorkoutDetail";
 import WorkoutForm from "../components/WorkoutForm";
 import WorkoutList from "../components/WorkoutList";
-import WorkoutDetail from "../components/WorkoutDetail";
 
 import type { Exercise } from "../types/Exercise";
 import type { Routine } from "../types/Routine";
@@ -15,25 +16,33 @@ import {
   addExerciseToWorkout,
   addSetToWorkoutExercise,
   deleteWorkout as deleteWorkoutRequest,
+  deleteWorkoutSet,
   getWorkoutById,
   getWorkouts,
   removeExerciseFromWorkout,
-  deleteWorkoutSet,
   updateWorkoutSet
 } from "../services/workoutService";
 
 function WorkoutsPage() {
-  const [exercises, setExercises] = useState<Exercise[]>([]);
-  const [routines, setRoutines] = useState<Routine[]>([]);
-  const [workouts, setWorkouts] = useState<Workout[]>([]);
+  const [exercises, setExercises] =
+    useState<Exercise[]>([]);
 
-  const [editingWorkout, setEditingWorkout] =
-    useState<Workout | null>(null);
+  const [routines, setRoutines] =
+    useState<Routine[]>([]);
+
+  const [workouts, setWorkouts] =
+    useState<Workout[]>([]);
 
   const [selectedWorkout, setSelectedWorkout] =
     useState<Workout | null>(null);
 
-  const [workoutError, setWorkoutError] =
+  const [editingWorkout, setEditingWorkout] =
+    useState<Workout | null>(null);
+
+  const [error, setError] =
+    useState<string | null>(null);
+
+  const [success, setSuccess] =
     useState<string | null>(null);
 
   async function loadExercises() {
@@ -42,7 +51,12 @@ function WorkoutsPage() {
       setExercises(data);
     } catch (error) {
       console.error(error);
-      setWorkoutError("No se pudieron cargar los ejercicios");
+
+      setError(
+        "No se pudieron cargar los ejercicios."
+      );
+
+      setSuccess(null);
     }
   }
 
@@ -52,7 +66,12 @@ function WorkoutsPage() {
       setRoutines(data);
     } catch (error) {
       console.error(error);
-      setWorkoutError("No se pudieron cargar las rutinas");
+
+      setError(
+        "No se pudieron cargar las rutinas."
+      );
+
+      setSuccess(null);
     }
   }
 
@@ -60,15 +79,30 @@ function WorkoutsPage() {
     try {
       const data = await getWorkouts();
       setWorkouts(data);
-      setWorkoutError(null);
     } catch (error) {
       console.error(error);
-      setWorkoutError("No se pudieron cargar los entrenamientos");
+
+      setError(
+        "No se pudieron cargar los entrenamientos."
+      );
+
+      setSuccess(null);
     }
   }
 
-  function startEditingWorkout(workout: Workout) {
+  useEffect(() => {
+    loadExercises();
+    loadRoutines();
+    loadWorkouts();
+  }, []);
+
+  function startEditingWorkout(
+    workout: Workout
+  ) {
     setEditingWorkout(workout);
+
+    setError(null);
+    setSuccess(null);
   }
 
   function cancelEditingWorkout() {
@@ -76,38 +110,121 @@ function WorkoutsPage() {
   }
 
   async function handleWorkoutSaved() {
-    await loadWorkouts();
-    setEditingWorkout(null);
-  }
-
-  async function deleteWorkout(id: number) {
     try {
-      await deleteWorkoutRequest(id);
+      const editedWorkoutId =
+        editingWorkout?.id ?? null;
+
+      setEditingWorkout(null);
+
       await loadWorkouts();
 
-      if (editingWorkout?.id === id) {
+      if (
+        selectedWorkout &&
+        editedWorkoutId === selectedWorkout.id
+      ) {
+        const updatedWorkout =
+          await getWorkoutById(
+            selectedWorkout.id
+          );
+
+        setSelectedWorkout(
+          updatedWorkout
+        );
+      }
+
+      setError(null);
+
+      setSuccess(
+        editedWorkoutId === null
+          ? "Entrenamiento creado correctamente."
+          : "Entrenamiento actualizado correctamente."
+      );
+    } catch (error) {
+      console.error(error);
+
+      setError(
+        "El entrenamiento se guardó, pero no se pudo actualizar la información de la pantalla."
+      );
+
+      setSuccess(null);
+    }
+  }
+
+  async function deleteWorkout(
+    workoutId: number
+  ) {
+    try {
+      await deleteWorkoutRequest(
+        workoutId
+      );
+
+      if (
+        selectedWorkout?.id === workoutId
+      ) {
+        setSelectedWorkout(null);
+      }
+
+      if (
+        editingWorkout?.id === workoutId
+      ) {
         setEditingWorkout(null);
       }
 
-      if (selectedWorkout?.id === id) {
-        setSelectedWorkout(null);
-      }
+      await loadWorkouts();
+
+      setError(null);
+
+      setSuccess(
+        "Entrenamiento eliminado correctamente."
+      );
     } catch (error) {
       console.error(error);
-      setWorkoutError("No se pudo eliminar el entrenamiento");
+
+      setError(
+        "No se pudo eliminar el entrenamiento."
+      );
+
+      setSuccess(null);
     }
   }
 
-  async function viewWorkout(id: number) {
+  async function viewWorkout(
+    workoutId: number
+  ) {
     try {
-      const workout = await getWorkoutById(id);
+      const workout =
+        await getWorkoutById(
+          workoutId
+        );
 
       setSelectedWorkout(workout);
-      setWorkoutError(null);
+
+      setError(null);
+      setSuccess(null);
     } catch (error) {
       console.error(error);
-      setWorkoutError("No se pudo cargar el entrenamiento");
+
+      setError(
+        "No se pudo cargar el entrenamiento."
+      );
+
+      setSuccess(null);
     }
+  }
+
+  async function refreshSelectedWorkout() {
+    if (!selectedWorkout) {
+      return;
+    }
+
+    const updatedWorkout =
+      await getWorkoutById(
+        selectedWorkout.id
+      );
+
+    setSelectedWorkout(
+      updatedWorkout
+    );
   }
 
   async function addExerciseToSelectedWorkout(
@@ -123,17 +240,21 @@ function WorkoutsPage() {
         exerciseId
       );
 
-      const updatedWorkout =
-        await getWorkoutById(selectedWorkout.id);
+      await refreshSelectedWorkout();
 
-      setSelectedWorkout(updatedWorkout);
-      setWorkoutError(null);
+      setError(null);
+
+      setSuccess(
+        "Ejercicio añadido al entrenamiento."
+      );
     } catch (error) {
       console.error(error);
 
-      setWorkoutError(
-        "No se pudo añadir el ejercicio al entrenamiento"
+      setError(
+        "No se pudo añadir el ejercicio."
       );
+
+      setSuccess(null);
     }
   }
 
@@ -150,72 +271,23 @@ function WorkoutsPage() {
         workoutExerciseId
       );
 
-      const updatedWorkout =
-        await getWorkoutById(selectedWorkout.id);
+      await refreshSelectedWorkout();
 
-      setSelectedWorkout(updatedWorkout);
-      setWorkoutError(null);
+      setError(null);
+
+      setSuccess(
+        "Ejercicio eliminado del entrenamiento."
+      );
     } catch (error) {
       console.error(error);
-      setWorkoutError(
-        "No se pudo quitar el ejercicio del entrenamiento"
+
+      setError(
+        "No se pudo eliminar el ejercicio."
       );
+
+      setSuccess(null);
     }
   }
-
-  async function updateSetInSelectedWorkout(
-  setId: number,
-  setNumber: number,
-  reps: number,
-  weight: number | null
-) {
-  if (!selectedWorkout) {
-    return;
-  }
-
-  try {
-    await updateWorkoutSet(
-      setId,
-      setNumber,
-      reps,
-      weight
-    );
-
-    const updatedWorkout =
-      await getWorkoutById(selectedWorkout.id);
-
-    setSelectedWorkout(updatedWorkout);
-    setWorkoutError(null);
-  } catch (error) {
-    console.error(error);
-    setWorkoutError(
-      "No se pudo actualizar la serie"
-    );
-  }
-}
-
-async function deleteSetFromSelectedWorkout(
-  setId: number
-) {
-  if (!selectedWorkout) {
-    return;
-  }
-
-  try {
-    await deleteWorkoutSet(setId);
-
-    const updatedWorkout =
-      await getWorkoutById(selectedWorkout.id);
-
-    setSelectedWorkout(updatedWorkout);
-    setWorkoutError(null);
-  } catch (error) {
-    console.error(error);
-    setWorkoutError(
-      "No se pudo eliminar la serie"
-    );
-  }
-}
 
   async function addSetToSelectedWorkoutExercise(
     workoutExerciseId: number,
@@ -223,10 +295,6 @@ async function deleteSetFromSelectedWorkout(
     reps: number,
     weight: number | null
   ) {
-    if (!selectedWorkout) {
-      return;
-    }
-
     try {
       await addSetToWorkoutExercise(
         workoutExerciseId,
@@ -235,55 +303,169 @@ async function deleteSetFromSelectedWorkout(
         weight
       );
 
-      const updatedWorkout =
-        await getWorkoutById(selectedWorkout.id);
+      await refreshSelectedWorkout();
 
-      setSelectedWorkout(updatedWorkout);
-      setWorkoutError(null);
+      setError(null);
+
+      setSuccess(
+        "Serie añadida correctamente."
+      );
     } catch (error) {
       console.error(error);
-      setWorkoutError("No se pudo añadir la serie");
+
+      setError(
+        "No se pudo añadir la serie."
+      );
+
+      setSuccess(null);
     }
   }
 
-  
+  async function updateSetInSelectedWorkout(
+    setId: number,
+    setNumber: number,
+    reps: number,
+    weight: number | null
+  ) {
+    try {
+      await updateWorkoutSet(
+        setId,
+        setNumber,
+        reps,
+        weight
+      );
 
-  useEffect(() => {
-    loadExercises();
-    loadRoutines();
-    loadWorkouts();
-  }, []);
+      await refreshSelectedWorkout();
+
+      setError(null);
+
+      setSuccess(
+        "Serie actualizada correctamente."
+      );
+    } catch (error) {
+      console.error(error);
+
+      setError(
+        "No se pudo actualizar la serie."
+      );
+
+      setSuccess(null);
+    }
+  }
+
+  async function deleteSetFromSelectedWorkout(
+    setId: number
+  ) {
+    try {
+      await deleteWorkoutSet(
+        setId
+      );
+
+      await refreshSelectedWorkout();
+
+      setError(null);
+
+      setSuccess(
+        "Serie eliminada correctamente."
+      );
+    } catch (error) {
+      console.error(error);
+
+      setError(
+        "No se pudo eliminar la serie."
+      );
+
+      setSuccess(null);
+    }
+  }
 
   return (
     <section>
-      <h2>Entrenamientos</h2>
+      <div className="dashboard-header">
+        <div>
+          <span className="workout-date-label">
+            Entrenamientos
+          </span>
 
-      <WorkoutForm
-        routines={routines}
-        editingWorkout={editingWorkout}
-        onWorkoutSaved={handleWorkoutSaved}
-        onCancelEdit={cancelEditingWorkout}
-      />
+          <h2>Mis entrenamientos</h2>
 
-      {workoutError && <p>{workoutError}</p>}
+          <p>
+            Registra tus sesiones y controla
+            los ejercicios y series realizadas.
+          </p>
+        </div>
+      </div>
 
-      <WorkoutList
-        workouts={workouts}
-        onViewWorkout={viewWorkout}
-        onEditWorkout={startEditingWorkout}
-        onDeleteWorkout={deleteWorkout}
-      />
+      {error && (
+        <AlertMessage
+          type="error"
+          message={error}
+        />
+      )}
+
+      {success && (
+        <AlertMessage
+          type="success"
+          message={success}
+        />
+      )}
+
+      <div className="dashboard-section">
+        <WorkoutForm
+          routines={routines}
+          editingWorkout={editingWorkout}
+          onWorkoutSaved={
+            handleWorkoutSaved
+          }
+          onCancelEdit={
+            cancelEditingWorkout
+          }
+        />
+      </div>
+
+      <div className="dashboard-section">
+        <h3>
+          Historial de entrenamientos
+        </h3>
+
+        <WorkoutList
+          workouts={workouts}
+          routines={routines}
+          onViewWorkout={
+            viewWorkout
+          }
+          onEditWorkout={
+            startEditingWorkout
+          }
+          onDeleteWorkout={
+            deleteWorkout
+          }
+        />
+      </div>
 
       {selectedWorkout && (
-        <WorkoutDetail
-          workout={selectedWorkout}
-          exercises={exercises}
-          onAddExercise={addExerciseToSelectedWorkout}
-          onAddSet={addSetToSelectedWorkoutExercise}
-          onRemoveExercise={removeExerciseFromSelectedWorkout}        
-          onUpdateSet={updateSetInSelectedWorkout}
-          onDeleteSet={deleteSetFromSelectedWorkout}
-        />
+        <div className="dashboard-section">
+          <WorkoutDetail
+            workout={selectedWorkout}
+            exercises={exercises}
+            routines={routines}
+            onAddExercise={
+              addExerciseToSelectedWorkout
+            }
+            onRemoveExercise={
+              removeExerciseFromSelectedWorkout
+            }
+            onAddSet={
+              addSetToSelectedWorkoutExercise
+            }
+            onUpdateSet={
+              updateSetInSelectedWorkout
+            }
+            onDeleteSet={
+              deleteSetFromSelectedWorkout
+            }
+          />
+        </div>
       )}
     </section>
   );
