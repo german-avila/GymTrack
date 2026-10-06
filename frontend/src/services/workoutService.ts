@@ -1,7 +1,8 @@
 import type { Workout } from "../types/Workout";
 
-const API_URL = "http://localhost:3000/api/workouts";
-
+const API_URL =
+  `${import.meta.env.VITE_API_URL}/api/workouts`;
+  
 export async function getWorkouts(): Promise<Workout[]> {
   const response = await fetch(API_URL);
 

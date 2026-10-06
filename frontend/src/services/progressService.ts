@@ -1,7 +1,8 @@
 import type { ExerciseProgress } from "../types/Progress";
 
-const API_URL = "http://localhost:3000/api/progress";
-
+const API_URL =
+  `${import.meta.env.VITE_API_URL}/api/progress`;
+  
 export async function getExerciseProgress(
   exerciseId: number
 ): Promise<ExerciseProgress> {

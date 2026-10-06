@@ -2,10 +2,13 @@ import pg from "pg";
 
 const { Pool } = pg;
 
+const databasePort =
+  Number(process.env.DB_PORT) || 5432;
+
 export const pool = new Pool({
-  host: "localhost",
-  port: 5432,
-  user: "gymtrack",
-  password: "gymtrack",
-  database: "gymtrack"
+  host: process.env.DB_HOST,
+  port: databasePort,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME
 });
