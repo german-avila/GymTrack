@@ -236,27 +236,6 @@
 }
 
 
-/* =========================
-   FORMS
-========================= */
-
-.exercise-form {
-  margin-bottom: 28px;
-  padding: 24px;
-
-  background-color: #171a21;
-  border: 1px solid #292f39;
-  border-radius: 14px;
-
-  box-shadow:
-    0 10px 30px rgb(0 0 0 / 0.12);
-}
-
-.exercise-form h2,
-.exercise-form h3 {
-  margin-bottom: 22px;
-}
-
 .form-group {
   display: flex;
   flex-direction: column;
@@ -812,7 +791,6 @@
     grid-template-columns: 1fr;
   }
 
-  .exercise-form,
   .workout-detail {
     padding: 18px;
   }
@@ -1121,105 +1099,15 @@
 }
 
 
-/* =========================
-   ROUTINE MANAGER
-========================= */
-
-.routine-manager {
-  margin-top: 28px;
-  padding: 24px;
-
-  background-color: #12151b;
-  border: 1px solid #292f39;
-  border-radius: 16px;
-}
-
-.routine-manager-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-
-  gap: 20px;
-
-  padding-bottom: 20px;
-  margin-bottom: 22px;
-
-  border-bottom: 1px solid #292f39;
-}
-
-.routine-manager-header h3 {
-  margin-bottom: 6px;
-  font-size: 24px;
-}
-
-.routine-manager-header p {
-  margin-bottom: 0;
-}
-
-.routine-manager-section {
-  margin-top: 24px;
-}
-
-.routine-manager-section h4 {
-  margin-bottom: 14px;
-}
-
-.routine-manager-list {
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-}
-
-.routine-manager-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  gap: 18px;
-
-  padding: 14px 16px;
-
-  background-color: #171a21;
-  border: 1px solid #292f39;
-  border-radius: 10px;
-
-  transition:
-    background-color 0.2s ease,
-    border-color 0.2s ease;
-}
-
-.routine-manager-item:hover {
-  background-color: #1b1f27;
-  border-color: #554822;
-}
-
-.routine-manager-item strong {
-  color: #f8fafc;
-}
-
-.routine-manager-item p {
-  margin: 4px 0 0;
-  font-size: 13px;
-}
-
-.routine-manager-item button {
-  margin-right: 0;
-  flex-shrink: 0;
-}
-
 @media (max-width: 700px) {
   .routine-grid {
     grid-template-columns: 1fr;
   }
 
-  .routine-card-header,
-  .routine-manager-header {
+  .routine-card-header {
     flex-direction: column;
   }
 
-  .routine-manager-item {
-    align-items: flex-start;
-  }
 }
 
 /* =========================
@@ -3430,33 +3318,6 @@ section {
 }
 
 
-/* ---------- FORMS ---------- */
-
-.exercise-form,
-.routine-form,
-.workout-form {
-  margin: 0;
-  padding: 24px 0 30px;
-
-  background: transparent;
-  border: 0;
-  border-top: 1px solid #292e35;
-  border-bottom: 1px solid #292e35;
-  border-radius: 0;
-
-  box-shadow: none;
-}
-
-.exercise-form h2,
-.exercise-form h3,
-.routine-form h2,
-.routine-form h3 {
-  margin-bottom: 22px;
-
-  font-size: 17px;
-  font-weight: 650;
-}
-
 .form-group label {
   color: #7e8793;
 
@@ -3663,34 +3524,6 @@ section {
 
   font-size: 11px;
   font-weight: 500;
-}
-
-
-/* ---------- ROUTINE MANAGER ---------- */
-
-.routine-manager {
-  margin-top: 0;
-  padding: 28px 0;
-
-  background: transparent;
-  border: 0;
-  border-top: 1px solid #292e35;
-  border-bottom: 1px solid #292e35;
-  border-radius: 0;
-}
-
-.routine-manager-item {
-  padding: 13px 0;
-
-  background: transparent;
-  border: 0;
-  border-bottom: 1px solid #20252b;
-  border-radius: 0;
-}
-
-.routine-manager-item:hover {
-  background: transparent;
-  border-color: #30363e;
 }
 
 
@@ -4902,31 +4735,6 @@ textarea:focus {
   color: #f0f2f4;
 }
 
-
-/* =========================================================
-   FORMS
-========================================================= */
-
-.exercise-form,
-.routine-form,
-.workout-form {
-  padding: 27px;
-
-  background:
-    linear-gradient(
-      145deg,
-      #13191f,
-      #11161b
-    );
-
-  border:
-    1px solid #2b343e;
-
-  border-radius: 7px;
-
-  box-shadow:
-    0 12px 32px rgb(0 0 0 / 0.12);
-}
 
 .form-group input,
 .form-group select,
