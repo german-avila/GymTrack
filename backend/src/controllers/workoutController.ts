@@ -251,11 +251,21 @@ export async function createWorkout(
   }
 }
 
-export async function updateWorkout(req: Request, res: Response) {
+export async function updateWorkout(
+  req: Request,
+  res: Response
+) {
   const workoutId = Number(req.params.id);
-  const { routineId, notes } = req.body;
 
-  if (!Number.isInteger(workoutId) || workoutId <= 0) {
+  const {
+    routineId,
+    notes
+  } = req.body;
+
+  if (
+    !Number.isInteger(workoutId) ||
+    workoutId <= 0
+  ) {
     return res.status(400).json({
       message: "Invalid workout ID"
     });
@@ -264,52 +274,98 @@ export async function updateWorkout(req: Request, res: Response) {
   if (
     routineId !== undefined &&
     routineId !== null &&
-    (!Number.isInteger(routineId) || routineId <= 0)
+    (
+      !Number.isInteger(routineId) ||
+      routineId <= 0
+    )
   ) {
     return res.status(400).json({
       message: "Invalid routine ID"
     });
   }
 
-  if (notes !== undefined && typeof notes !== "string") {
+  if (
+    notes !== undefined &&
+    typeof notes !== "string"
+  ) {
     return res.status(400).json({
-      message: "Notes must be a string"
+      message:
+        "Notes must be a string"
     });
   }
 
   try {
-    const result = await pool.query(
-      `
-        UPDATE workouts
-        SET
-          routine_id = COALESCE($1, routine_id),
-          notes = COALESCE($2, notes)
-        WHERE id = $3
-        RETURNING
-          id,
-          routine_id AS "routineId",
-          performed_at AS "performedAt",
-          notes
-      `,
-      [
-        routineId ?? null,
-        notes?.trim() ?? null,
-        workoutId
-      ]
-    );
+    const workoutResult =
+      await pool.query(
+        `
+          SELECT status
+          FROM workouts
+          WHERE id = $1
+        `,
+        [workoutId]
+      );
 
-    if (result.rows.length === 0) {
+    if (
+      workoutResult.rows.length === 0
+    ) {
       return res.status(404).json({
-        message: "Workout not found"
+        message:
+          "Workout not found"
       });
     }
 
-    return res.status(200).json(result.rows[0]);
+    if (
+      workoutResult.rows[0].status !==
+      "active"
+    ) {
+      return res.status(403).json({
+        message:
+          "Completed workouts cannot be modified"
+      });
+    }
+
+    const result =
+      await pool.query(
+        `
+          UPDATE workouts
+          SET
+            routine_id =
+              COALESCE($1, routine_id),
+            notes =
+              COALESCE($2, notes)
+          WHERE id = $3
+          RETURNING
+            id,
+            routine_id
+              AS "routineId",
+            performed_at
+              AS "performedAt",
+            notes,
+            status,
+            started_at
+              AS "startedAt",
+            ended_at
+              AS "endedAt"
+        `,
+        [
+          routineId ?? null,
+          notes?.trim() ?? null,
+          workoutId
+        ]
+      );
+
+    return res.status(200).json(
+      result.rows[0]
+    );
   } catch (error) {
-    console.error("Failed to update workout:", error);
+    console.error(
+      "Failed to update workout:",
+      error
+    );
 
     return res.status(500).json({
-      message: "Internal server error"
+      message:
+        "Internal server error"
     });
   }
 }

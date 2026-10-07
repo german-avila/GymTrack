@@ -1,12 +1,10 @@
 import { Router } from "express";
 import {
-  addExerciseToRoutine,
   createRoutine,
   deleteRoutine,
   getRoutineById,
   getRoutines,
-  updateRoutine,
-  removeExerciseFromRoutine
+  updateRoutine
 } from "../controllers/routineController.js";
 
 export const routineRouter =
@@ -35,14 +33,4 @@ routineRouter.patch(
 routineRouter.delete(
   "/:id",
   deleteRoutine
-);
-
-routineRouter.post(
-  "/:id/exercises",
-  addExerciseToRoutine
-);
-
-routineRouter.delete(
-  "/:id/exercises/:exerciseId",
-  removeExerciseFromRoutine
 );
