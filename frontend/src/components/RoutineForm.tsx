@@ -4,13 +4,16 @@ import {
   useState
 } from "react";
 
-import type { Exercise } from "../types/Exercise";
-import type { Routine } from "../types/Routine";
+import type {
+  Exercise
+} from "../types/Exercise";
+
+import type {
+  Routine
+} from "../types/Routine";
 
 import {
-  addExerciseToRoutine,
   createRoutine,
-  removeExerciseFromRoutine,
   updateRoutine
 } from "../services/routineService";
 
@@ -30,8 +33,10 @@ function RoutineForm({
   const [name, setName] =
     useState("");
 
-  const [description, setDescription] =
-    useState("");
+  const [
+    description,
+    setDescription
+  ] = useState("");
 
   const [
     selectedExerciseIds,
@@ -47,7 +52,9 @@ function RoutineForm({
   ] = useState(false);
 
   const [error, setError] =
-    useState<string | null>(null);
+    useState<string | null>(
+      null
+    );
 
   useEffect(() => {
     if (editingRoutine) {
@@ -56,12 +63,14 @@ function RoutineForm({
       );
 
       setDescription(
-        editingRoutine.description ?? ""
+        editingRoutine.description ??
+          ""
       );
 
       setSelectedExerciseIds(
         editingRoutine.exercises?.map(
-          (exercise) => exercise.id
+          (exercise) =>
+            exercise.id
         ) ?? []
       );
     } else {
@@ -81,14 +90,16 @@ function RoutineForm({
           .map((exerciseId) =>
             exercises.find(
               (exercise) =>
-                exercise.id === exerciseId
+                exercise.id ===
+                exerciseId
             )
           )
           .filter(
             (
               exercise
             ): exercise is Exercise =>
-              exercise !== undefined
+              exercise !==
+              undefined
           ),
       [
         exercises,
@@ -101,7 +112,9 @@ function RoutineForm({
       const normalizedSearch =
         search
           .trim()
-          .toLocaleLowerCase("es-ES");
+          .toLocaleLowerCase(
+            "es-ES"
+          );
 
       return exercises.filter(
         (exercise) => {
@@ -110,7 +123,9 @@ function RoutineForm({
               exercise.id
             );
 
-          if (isAlreadySelected) {
+          if (
+            isAlreadySelected
+          ) {
             return false;
           }
 
@@ -122,12 +137,16 @@ function RoutineForm({
 
           return (
             exercise.name
-              .toLocaleLowerCase("es-ES")
+              .toLocaleLowerCase(
+                "es-ES"
+              )
               .includes(
                 normalizedSearch
               ) ||
             exercise.muscleGroup
-              .toLocaleLowerCase("es-ES")
+              .toLocaleLowerCase(
+                "es-ES"
+              )
               .includes(
                 normalizedSearch
               )
@@ -163,53 +182,15 @@ function RoutineForm({
     );
   }
 
-  async function syncRoutineExercises(
-    routineId: number,
-    originalExerciseIds: number[]
-  ) {
-    const exercisesToAdd =
-      selectedExerciseIds.filter(
-        (exerciseId) =>
-          !originalExerciseIds.includes(
-            exerciseId
-          )
-      );
-
-    const exercisesToRemove =
-      originalExerciseIds.filter(
-        (exerciseId) =>
-          !selectedExerciseIds.includes(
-            exerciseId
-          )
-      );
-
-    for (
-      const exerciseId of
-      exercisesToRemove
-    ) {
-      await removeExerciseFromRoutine(
-        routineId,
-        exerciseId
-      );
-    }
-
-    for (
-      const exerciseId of
-      exercisesToAdd
-    ) {
-      await addExerciseToRoutine(
-        routineId,
-        exerciseId
-      );
-    }
-  }
-
   async function handleSubmit(
-    event: React.FormEvent<HTMLFormElement>
+    event:
+      React.FormEvent<HTMLFormElement>
   ) {
     event.preventDefault();
 
-    if (name.trim() === "") {
+    if (
+      name.trim() === ""
+    ) {
       setError(
         "El nombre de la rutina es obligatorio."
       );
@@ -222,32 +203,17 @@ function RoutineForm({
 
     try {
       if (editingRoutine) {
-        const originalExerciseIds =
-          editingRoutine.exercises?.map(
-            (exercise) =>
-              exercise.id
-          ) ?? [];
-
         await updateRoutine(
           editingRoutine.id,
           name,
-          description
-        );
-
-        await syncRoutineExercises(
-          editingRoutine.id,
-          originalExerciseIds
+          description,
+          selectedExerciseIds
         );
       } else {
-        const createdRoutine =
-          await createRoutine(
-            name,
-            description
-          );
-
-        await syncRoutineExercises(
-          createdRoutine.id,
-          []
+        await createRoutine(
+          name,
+          description,
+          selectedExerciseIds
         );
       }
 
@@ -320,25 +286,34 @@ function RoutineForm({
           </div>
 
           <span className="routine-editor-count">
-            {selectedExerciseIds.length}
-            {" "}
-            {selectedExerciseIds.length === 1
+            {
+              selectedExerciseIds.length
+            }{" "}
+            {selectedExerciseIds.length ===
+            1
               ? "seleccionado"
               : "seleccionados"}
           </span>
         </div>
 
-        {selectedExercises.length === 0 ? (
+        {selectedExercises.length ===
+        0 ? (
           <div className="routine-editor-empty">
-            Todavía no has añadido ejercicios.
+            Todavía no has añadido
+            ejercicios.
           </div>
         ) : (
           <div className="routine-selected-list">
             {selectedExercises.map(
-              (exercise, index) => (
+              (
+                exercise,
+                index
+              ) => (
                 <div
                   className="routine-selected-exercise"
-                  key={exercise.id}
+                  key={
+                    exercise.id
+                  }
                 >
                   <span className="routine-exercise-order">
                     {index + 1}
@@ -346,11 +321,15 @@ function RoutineForm({
 
                   <div className="routine-selected-info">
                     <strong>
-                      {exercise.name}
+                      {
+                        exercise.name
+                      }
                     </strong>
 
                     <span>
-                      {exercise.muscleGroup}
+                      {
+                        exercise.muscleGroup
+                      }
                     </span>
                   </div>
 
@@ -398,24 +377,32 @@ function RoutineForm({
         />
 
         <div className="routine-available-list">
-          {availableExercises.length === 0 ? (
+          {availableExercises.length ===
+          0 ? (
             <div className="routine-editor-empty">
-              No hay ejercicios que coincidan.
+              No hay ejercicios que
+              coincidan.
             </div>
           ) : (
             availableExercises.map(
               (exercise) => (
                 <div
                   className="routine-available-exercise"
-                  key={exercise.id}
+                  key={
+                    exercise.id
+                  }
                 >
                   <div>
                     <strong>
-                      {exercise.name}
+                      {
+                        exercise.name
+                      }
                     </strong>
 
                     <span>
-                      {exercise.muscleGroup}
+                      {
+                        exercise.muscleGroup
+                      }
                     </span>
                   </div>
 
@@ -447,8 +434,12 @@ function RoutineForm({
         <button
           className="secondary-button"
           type="button"
-          onClick={onCancelEdit}
-          disabled={isSubmitting}
+          onClick={
+            onCancelEdit
+          }
+          disabled={
+            isSubmitting
+          }
         >
           Cancelar
         </button>
@@ -456,7 +447,9 @@ function RoutineForm({
         <button
           className="primary-button"
           type="submit"
-          disabled={isSubmitting}
+          disabled={
+            isSubmitting
+          }
         >
           {isSubmitting
             ? "Guardando..."
